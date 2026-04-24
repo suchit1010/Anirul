@@ -1,27 +1,27 @@
-# Workspace
+# SwasthAI
 
-## Overview
+AI-powered longitudinal health memory app for Indian patients. Frontend-only Expo (React Native) app with AsyncStorage persistence.
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+## Architecture
+- Single Expo artifact at `artifacts/swasthai/`, mounted at `/`.
+- AsyncStorage-backed `HealthContext` holds the patient's full record (documents, labs, meds, diagnoses, visits, alerts, tasks, family, risk scores).
+- Regex-based lab/med extractor in `lib/extract.ts` handles English + Devanagari digits, demo "Use sample" button.
+- React Native SVG sparklines for trends (`components/TrendSparkline.tsx`).
+- Native tabs (iOS 26 liquid glass) with classic Tabs fallback.
 
-## Stack
+## Screens
+- **Home** — Greeting, health score ring, ABHA badge, care continuity, alerts, latest labs, HbA1c trend, quick actions.
+- **Timeline** — Filterable chronological feed (visits, labs, meds, alerts).
+- **Add** — Pick source, paste/upload report, AI extraction with confidence + language detect, save to timeline.
+- **Care** — Pending/done tasks, active medications.
+- **You** — Profile, family, risk profile, privacy/consent, reset demo data.
+- **Doctor brief modal** — Pre-consult AI summary.
+- **Lab trend & document detail** stack screens.
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+## Design
+- Forest green (#0D3D2A) primary, cream (#FAFAF7) background.
+- Fonts: DM Serif Display for headlines, Inter for UI.
+- Feather icons everywhere; no emojis.
 
-## Key Commands
-
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
-
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Seed patient
+Arjun Sharma, T2DM + HTN + dyslipidemia, HbA1c trending 6.8 → 7.2 → 7.8.
