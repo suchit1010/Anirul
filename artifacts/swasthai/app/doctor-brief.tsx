@@ -17,7 +17,7 @@ export default function DoctorBriefScreen() {
       <View style={[styles.head, { backgroundColor: colors.primary }]}>
         <View style={styles.badge}>
           <Feather name="file-text" size={12} color="#fff" />
-          <Text style={styles.badgeText}>AI Pre-Consult Brief</Text>
+          <Text style={styles.badgeText}>Swastha AI · Pre-Consult Brief</Text>
         </View>
         <Text style={styles.patient}>{state.patientName}</Text>
         <Text style={styles.meta}>52 yrs · M · ABHA verified</Text>
