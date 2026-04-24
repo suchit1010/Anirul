@@ -39,6 +39,10 @@ function RootLayoutNav() {
         name="doctor-brief"
         options={{ presentation: "modal", title: "Doctor Brief" }}
       />
+      <Stack.Screen
+        name="memory"
+        options={{ presentation: "modal", title: "Swastha AI", headerShown: false }}
+      />
     </Stack>
   );
 }

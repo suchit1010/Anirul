@@ -90,6 +90,13 @@ export interface RiskScore {
   factors: string[];
 }
 
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  createdAt: string;
+}
+
 export interface HealthState {
   patientName: string;
   abhaLinked: boolean;
@@ -104,4 +111,5 @@ export interface HealthState {
   tasks: CareTask[];
   family: FamilyMember[];
   risks: RiskScore[];
+  messages: ChatMessage[];
 }

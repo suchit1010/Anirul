@@ -84,9 +84,19 @@ export default function ProfileScreen() {
         <View style={{ paddingHorizontal: 16 }}>
           <SectionHeader title="Family" />
           {state.family.map((f) => (
-            <View
+            <Pressable
               key={f.id}
-              style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() =>
+                Alert.alert(
+                  f.name,
+                  `${f.relation} · ${f.age} yrs\n\nDelegated access: view-only.\nLast active: today\n\nThey can view your timeline and share emergency info.`,
+                  [{ text: "OK" }],
+                )
+              }
+              style={({ pressed }) => [
+                styles.row,
+                { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.85 : 1 },
+              ]}
             >
               <View style={[styles.famAvatar, { backgroundColor: colors.primaryPale }]}>
                 <Text style={[styles.famInit, { color: colors.primary }]}>{f.initials}</Text>
@@ -98,8 +108,23 @@ export default function ProfileScreen() {
                 </Text>
               </View>
               <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-            </View>
+            </Pressable>
           ))}
+          <Pressable
+            onPress={() =>
+              Alert.alert("Invite family", "A WhatsApp invite will be sent so they can request view access. (Demo)")
+            }
+            style={({ pressed }) => [
+              styles.row,
+              { backgroundColor: colors.card, borderColor: colors.border, borderStyle: "dashed", opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <View style={[styles.famAvatar, { backgroundColor: colors.primaryPale }]}>
+              <Feather name="user-plus" size={16} color={colors.primary} />
+            </View>
+            <Text style={[styles.rowTitle, { color: colors.primary, flex: 1 }]}>Invite a family member</Text>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </Pressable>
 
           <SectionHeader title="Risk profile" />
           {state.risks.map((r) => {
@@ -149,14 +174,64 @@ export default function ProfileScreen() {
             );
           })}
 
+          <SectionHeader title="Memory" />
+          <Pressable onPress={() => router.push("/memory")}>
+            <SettingsRow icon="message-circle" label="Open Swastha AI chat" sub="Ask anything about your health" />
+          </Pressable>
+          <Pressable onPress={() => router.push("/timeline")}>
+            <SettingsRow icon="database" label={`${state.documents.length} documents in memory`} sub="Tap to browse timeline" />
+          </Pressable>
+
           <SectionHeader title="Privacy & sharing" />
-          <SettingsRow icon="lock" label="Consent center" sub="Active grants and history" />
-          <SettingsRow icon="share-2" label="Share with doctor" sub="Generate one-time link" />
-          <SettingsRow icon="credit-card" label="Private payments" sub="Stealth address for sensitive care" />
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                "Consent center",
+                `Active grants:\n\n• Dr Sharma — view labs (until 30 Jun)\n• Apollo Pharmacy — refill notifications\n• Family: Priya — full view\n\nAll grants can be revoked anytime.`,
+              )
+            }
+          >
+            <SettingsRow icon="lock" label="Consent center" sub={`${state.family.length + 2} active grants`} />
+          </Pressable>
+          <Pressable onPress={() => router.push("/doctor-brief")}>
+            <SettingsRow icon="share-2" label="Share with doctor" sub="Generate one-time link" />
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                "Private payments",
+                "Stealth payment address for sensitive care (mental health, fertility, etc) so it doesn't appear on shared bank statements. (Coming soon)",
+              )
+            }
+          >
+            <SettingsRow icon="credit-card" label="Private payments" sub="Stealth address for sensitive care" />
+          </Pressable>
 
           <SectionHeader title="App" />
-          <SettingsRow icon="bell" label="Notifications" sub="WhatsApp, push, SMS" />
-          <SettingsRow icon="globe" label="Language" sub="English (auto-detect)" />
+          <Pressable
+            onPress={() =>
+              Alert.alert(
+                "Notifications",
+                "Channels enabled:\n\n• Push: ON\n• WhatsApp: ON (+91 98xxx xxxxx)\n• SMS: OFF\n\nAlerts: critical labs, refill due, follow-up reminders.",
+              )
+            }
+          >
+            <SettingsRow icon="bell" label="Notifications" sub="WhatsApp, push, SMS" />
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              Alert.alert("Language", "Reports auto-detect English / Hindi / mixed (Hinglish). UI: English. Hindi UI coming soon.")
+            }
+          >
+            <SettingsRow icon="globe" label="Language" sub="English (auto-detect reports)" />
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              Alert.alert("About Anirul", `Anirul · Powered by Swastha AI\nVersion 1.0\n\nYour lifelong health memory — patient-held, ABHA-linked, family-friendly.`)
+            }
+          >
+            <SettingsRow icon="info" label="About" sub="Anirul · v1.0" />
+          </Pressable>
           <Pressable onPress={onReset}>
             <SettingsRow icon="refresh-cw" label="Reset demo data" destructive />
           </Pressable>

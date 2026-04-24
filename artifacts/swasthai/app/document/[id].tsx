@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { EmptyState } from "@/components/EmptyState";
 import { LabValueCard } from "@/components/LabValueCard";
@@ -10,8 +10,9 @@ import { useHealth } from "@/contexts/HealthContext";
 
 export default function DocumentScreen() {
   const colors = useColors();
+  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { state } = useHealth();
+  const { state, deleteDocument } = useHealth();
   const doc = state.documents.find((d) => d.id === id);
 
   if (!doc) {
@@ -21,6 +22,24 @@ export default function DocumentScreen() {
       </View>
     );
   }
+
+  const onDelete = () => {
+    Alert.alert(
+      "Delete document?",
+      "This removes the document and any lab values it contributed.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await deleteDocument(doc.id);
+            router.back();
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: 16 }}>
@@ -51,6 +70,19 @@ export default function DocumentScreen() {
         </>
       ) : null}
 
+      {doc.extractedDiagnoses && doc.extractedDiagnoses.length > 0 ? (
+        <>
+          <Text style={[styles.section, { color: colors.foreground }]}>Diagnoses</Text>
+          <View style={styles.tagRow}>
+            {doc.extractedDiagnoses.map((d) => (
+              <View key={d} style={[styles.tag, { backgroundColor: colors.primaryPale }]}>
+                <Text style={[styles.tagText, { color: colors.primary }]}>{d}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : null}
+
       {doc.rawText ? (
         <>
           <Text style={[styles.section, { color: colors.foreground }]}>Original text</Text>
@@ -59,6 +91,17 @@ export default function DocumentScreen() {
           </View>
         </>
       ) : null}
+
+      <Pressable
+        onPress={onDelete}
+        style={({ pressed }) => [
+          styles.deleteBtn,
+          { backgroundColor: colors.destructiveLight, opacity: pressed ? 0.8 : 1 },
+        ]}
+      >
+        <Feather name="trash-2" size={16} color={colors.destructive} />
+        <Text style={[styles.deleteText, { color: colors.destructive }]}>Delete from memory</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -77,10 +120,23 @@ const styles = StyleSheet.create({
   confText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   section: { fontFamily: "Inter_600SemiBold", fontSize: 15, marginTop: 22, marginBottom: 10 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  tag: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  tagText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   rawCard: {
     padding: 14,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
   },
   raw: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 19 },
+  deleteBtn: {
+    marginTop: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  deleteText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
 });

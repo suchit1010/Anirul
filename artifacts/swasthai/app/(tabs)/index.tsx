@@ -138,6 +138,32 @@ export default function HomeScreen() {
             paddingHorizontal: contentPadH,
           }}
         >
+          <Pressable
+            onPress={() => router.push("/memory")}
+            style={({ pressed }) => [
+              styles.memoryCta,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.primarySoft,
+                opacity: pressed ? 0.9 : 1,
+                marginTop: 18,
+              },
+            ]}
+          >
+            <View style={[styles.memoryIcon, { backgroundColor: colors.primary }]}>
+              <Feather name="message-circle" size={18} color="#fff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.memoryTitle, { color: colors.foreground }]}>
+                Ask Swastha AI
+              </Text>
+              <Text style={[styles.memorySub, { color: colors.mutedForeground }]} numberOfLines={1}>
+                Your private health memory. {state.messages.length > 1 ? `${state.messages.length} messages saved.` : "Try a question."}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </Pressable>
+
           {r.isWide ? (
             // Dashboard layout — two columns
             <View style={styles.dashRow}>
@@ -260,10 +286,10 @@ export default function HomeScreen() {
 
               <SectionHeader title="Quick actions" />
               <View style={styles.actionsGrid}>
+                <QuickAction icon="message-circle" label="Ask Swastha AI" onPress={() => router.push("/memory")} />
                 <QuickAction icon="upload-cloud" label="Add report" onPress={() => router.push("/upload")} />
-                <QuickAction icon="clock" label="Timeline" onPress={() => router.push("/timeline")} />
+                <QuickAction icon="file-text" label="Doctor brief" onPress={() => router.push("/doctor-brief")} />
                 <QuickAction icon="check-square" label="Care plan" onPress={() => router.push("/care")} />
-                <QuickAction icon="users" label="Family" onPress={() => router.push("/profile")} />
               </View>
             </>
           )}
@@ -496,6 +522,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   actionLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, flex: 1 },
+  memoryCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  memoryIcon: {
+    width: 38, height: 38, borderRadius: 12,
+    alignItems: "center", justifyContent: "center",
+  },
+  memoryTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  memorySub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
   emptyTile: {
     padding: 16,
     borderRadius: 12,

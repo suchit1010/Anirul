@@ -289,4 +289,12 @@ export const SEED_STATE: HealthState = {
       factors: ["Creatinine normal", "eGFR > 90"],
     },
   ],
+  messages: [
+    {
+      id: "msg-welcome",
+      role: "assistant",
+      text: "Namaste Arjun. I'm Swastha AI — your private health memory. Ask me anything about your reports, meds, trends, or risks. Try: 'What's my latest HbA1c?' or 'Summarise my last 3 months.'",
+      createdAt: new Date().toISOString(),
+    },
+  ],
 };
