@@ -16,17 +16,21 @@ import {
   recomputeHealthScore,
   recomputeRisks,
 } from "@/lib/healthEngine";
+import { buildHealthSummary } from "@/lib/healthSummary";
+import { callChat } from "@/lib/swasthaiAPI";
 import {
+  AppPrefs,
   CareTask,
   ChatMessage,
   HealthAlert,
   HealthDocument,
   HealthState,
   LabValue,
+  LanguageCode,
   Medication,
 } from "@/types/health";
 
-const STORAGE_KEY = "swasthai:health-state:v2";
+const STORAGE_KEY = "swasthai:health-state:v3";
 
 interface HealthContextValue {
   state: HealthState;
@@ -36,8 +40,10 @@ interface HealthContextValue {
   acknowledgeAlert: (id: string) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
   resetData: () => Promise<void>;
-  sendMessage: (text: string) => Promise<void>;
+  sendMessage: (text: string) => Promise<ChatMessage>;
   clearMessages: () => Promise<void>;
+  setLanguage: (code: LanguageCode) => Promise<void>;
+  setVoiceAutoplay: (on: boolean) => Promise<void>;
   getLabHistory: (name: string) => LabValue[];
   getActiveMedications: () => Medication[];
   getPendingAlerts: () => HealthAlert[];
@@ -46,11 +52,14 @@ interface HealthContextValue {
 
 const HealthContext = createContext<HealthContextValue | null>(null);
 
+const DEFAULT_PREFS: AppPrefs = { language: "en", voiceAutoplay: false };
+
 function migrate(parsed: Partial<HealthState>): HealthState {
   return {
     ...SEED_STATE,
     ...parsed,
     messages: parsed.messages ?? SEED_STATE.messages,
+    prefs: { ...DEFAULT_PREFS, ...(parsed.prefs ?? {}) },
   };
 }
 
@@ -109,6 +118,7 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
         role: "assistant",
         text: `Saved "${doc.title}" to memory. I extracted ${newLabs.length} lab value(s)${newAlerts.length ? ` and flagged ${newAlerts.length} new alert(s)` : ""}. Ask me anything about it.`,
         createdAt: new Date().toISOString(),
+        provider: "local",
       };
       await persist({
         ...withRisks,
@@ -171,9 +181,17 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
   }, [persist]);
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string): Promise<ChatMessage> => {
       const trimmed = text.trim();
-      if (!trimmed) return;
+      if (!trimmed) {
+        return {
+          id: "noop",
+          role: "assistant",
+          text: "",
+          createdAt: new Date().toISOString(),
+          provider: "local",
+        };
+      }
       const userMsg: ChatMessage = {
         id: `msg-${Date.now().toString(36)}-u`,
         role: "user",
@@ -184,20 +202,39 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
         ...state,
         messages: [...state.messages, userMsg],
       };
-      // Optimistically render the user message
       setState(stateWithUser);
-      // Generate the assistant reply from the latest snapshot
-      const reply = answerQuestion(trimmed, stateWithUser);
+
+      let aiText = "";
+      let provider: ChatMessage["provider"] = "local";
+      let model: string | undefined;
+      try {
+        const summary = buildHealthSummary(stateWithUser);
+        const r = await callChat({
+          messages: stateWithUser.messages,
+          healthSummary: summary,
+          language: stateWithUser.prefs.language,
+        });
+        aiText = r.reply;
+        provider = r.provider;
+        model = r.model;
+      } catch {
+        aiText = answerQuestion(trimmed, stateWithUser);
+        provider = "local";
+      }
+
       const aiMsg: ChatMessage = {
         id: `msg-${Date.now().toString(36)}-a`,
         role: "assistant",
-        text: reply,
+        text: aiText || "Sorry, I couldn't respond right now. Please try again.",
         createdAt: new Date().toISOString(),
+        provider,
+        model,
       };
       await persist({
         ...stateWithUser,
         messages: [...stateWithUser.messages, aiMsg],
       });
+      return aiMsg;
     },
     [state, persist],
   );
@@ -205,6 +242,20 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
   const clearMessages = useCallback(async () => {
     await persist({ ...state, messages: SEED_STATE.messages });
   }, [state, persist]);
+
+  const setLanguage = useCallback(
+    async (code: LanguageCode) => {
+      await persist({ ...state, prefs: { ...state.prefs, language: code } });
+    },
+    [state, persist],
+  );
+
+  const setVoiceAutoplay = useCallback(
+    async (on: boolean) => {
+      await persist({ ...state, prefs: { ...state.prefs, voiceAutoplay: on } });
+    },
+    [state, persist],
+  );
 
   const getLabHistory = useCallback(
     (name: string) =>
@@ -240,6 +291,8 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
       resetData,
       sendMessage,
       clearMessages,
+      setLanguage,
+      setVoiceAutoplay,
       getLabHistory,
       getActiveMedications,
       getPendingAlerts,
@@ -255,6 +308,8 @@ export function HealthProvider({ children }: { children: React.ReactNode }) {
       resetData,
       sendMessage,
       clearMessages,
+      setLanguage,
+      setVoiceAutoplay,
       getLabHistory,
       getActiveMedications,
       getPendingAlerts,

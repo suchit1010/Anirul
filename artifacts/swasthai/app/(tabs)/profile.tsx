@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { SectionHeader } from "@/components/SectionHeader";
 import { useColors } from "@/hooks/useColors";
+import { getLanguageInfo } from "@/constants/languages";
 import { useHealth } from "@/contexts/HealthContext";
 
 export default function ProfileScreen() {
@@ -218,12 +219,12 @@ export default function ProfileScreen() {
           >
             <SettingsRow icon="bell" label="Notifications" sub="WhatsApp, push, SMS" />
           </Pressable>
-          <Pressable
-            onPress={() =>
-              Alert.alert("Language", "Reports auto-detect English / Hindi / mixed (Hinglish). UI: English. Hindi UI coming soon.")
-            }
-          >
-            <SettingsRow icon="globe" label="Language" sub="English (auto-detect reports)" />
+          <Pressable onPress={() => router.push("/memory")}>
+            <SettingsRow
+              icon="globe"
+              label="Language"
+              sub={`Swastha AI replies in ${getLanguageInfo(state.prefs.language).native}`}
+            />
           </Pressable>
           <Pressable
             onPress={() =>

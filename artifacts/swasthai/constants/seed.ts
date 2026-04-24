@@ -293,8 +293,13 @@ export const SEED_STATE: HealthState = {
     {
       id: "msg-welcome",
       role: "assistant",
-      text: "Namaste Arjun. I'm Swastha AI — your private health memory. Ask me anything about your reports, meds, trends, or risks. Try: 'What's my latest HbA1c?' or 'Summarise my last 3 months.'",
+      text: "Namaste Arjun. I'm Swastha AI — your private health memory. Ask me anything about your reports, meds, trends, or risks. You can type, tap the mic to speak, or switch to your preferred language from the top bar.",
       createdAt: new Date().toISOString(),
+      provider: "local",
     },
   ],
+  prefs: {
+    language: "en",
+    voiceAutoplay: false,
+  },
 };

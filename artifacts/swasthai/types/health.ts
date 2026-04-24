@@ -95,6 +95,16 @@ export interface ChatMessage {
   role: "user" | "assistant";
   text: string;
   createdAt: string;
+  provider?: "openai" | "anthropic" | "gemini" | "local";
+  model?: string;
+}
+
+export type LanguageCode =
+  | "en" | "hi" | "ta" | "te" | "bn" | "mr" | "kn" | "ml" | "gu" | "pa";
+
+export interface AppPrefs {
+  language: LanguageCode;
+  voiceAutoplay: boolean;
 }
 
 export interface HealthState {
@@ -112,4 +122,5 @@ export interface HealthState {
   family: FamilyMember[];
   risks: RiskScore[];
   messages: ChatMessage[];
+  prefs: AppPrefs;
 }
