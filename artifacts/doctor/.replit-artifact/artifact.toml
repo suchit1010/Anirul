@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/doctor/"
+title = "SwasthAI Doctor"
+version = "1.0.0"
+id = "artifacts/doctor"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/doctor/" ]
+localPort = 24761
+
+[services.development]
+run = "pnpm --filter @workspace/doctor run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/doctor", "run", "build" ]
+publicDir = "artifacts/doctor/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24761"
+BASE_PATH = "/doctor/"
