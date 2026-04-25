@@ -1,0 +1,531 @@
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-sans);font-size:14px;line-height:1.6;color:var(--color-text-primary);background:transparent}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.wrap{padding:0.5rem 0 2rem}
+.tabs{display:flex;gap:4px;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:1.5rem;flex-wrap:wrap}
+.tab{padding:7px 14px;border-radius:var(--border-radius-md) var(--border-radius-md) 0 0;font-size:13px;font-weight:500;border:0.5px solid transparent;border-bottom:none;cursor:pointer;background:transparent;color:var(--color-text-secondary);transition:all .12s;white-space:nowrap}
+.tab.active{background:var(--color-background-primary);border-color:var(--color-border-tertiary);color:var(--color-text-primary);margin-bottom:-0.5px}
+.tab:hover:not(.active){background:var(--color-background-secondary);color:var(--color-text-primary)}
+.panel{display:none}.panel.active{display:block}
+.section{margin-bottom:1.75rem}
+.portal-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;margin-bottom:1rem}
+.pb-patient{background:var(--color-background-success);color:var(--color-text-success)}
+.pb-doctor{background:var(--color-background-info);color:var(--color-text-info)}
+.pb-ai{background:#EEEDFE;color:#3C3489}
+.pb-pay{background:#FAEEDA;color:#633806}
+.h1{font-size:18px;font-weight:500;margin-bottom:6px}
+.h2{font-size:15px;font-weight:500;margin-bottom:8px;margin-top:1.25rem}
+.h3{font-size:13px;font-weight:500;margin-bottom:6px;color:var(--color-text-secondary)}
+.lead{font-size:14px;color:var(--color-text-secondary);line-height:1.7;margin-bottom:1.25rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.125rem}
+.card-surface{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.875rem 1rem}
+.feature-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.feature-row:last-child{border-bottom:none}
+.feat-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:7px}
+.fd-green{background:#639922}.fd-blue{background:#378ADD}.fd-purple{background:#7F77DD}.fd-amber{background:#BA7517}.fd-teal{background:#1D9E75}
+.feat-title{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.feat-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.5;margin-top:2px}
+.file-chip{display:inline-block;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:4px;padding:2px 7px;font-size:11px;font-family:var(--font-mono);color:var(--color-text-secondary);margin:2px 2px 2px 0}
+.status-chip{display:inline-block;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:500}
+.sc-done{background:var(--color-background-success);color:var(--color-text-success)}
+.sc-build{background:var(--color-background-warning);color:var(--color-text-warning)}
+.sc-new{background:var(--color-background-info);color:var(--color-text-info)}
+.flow-step{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.flow-step:last-child{border-bottom:none}
+.step-num{min-width:22px;height:22px;border-radius:50%;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;margin-top:1px;color:var(--color-text-secondary)}
+.step-body{flex:1}
+.step-title{font-size:13px;font-weight:500;margin-bottom:2px}
+.step-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.api-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.api-row:last-child{border-bottom:none}
+.method{font-size:10px;font-weight:500;padding:2px 6px;border-radius:4px;font-family:var(--font-mono);min-width:40px;text-align:center}
+.m-get{background:#E6F1FB;color:#185FA5}.m-post{background:#EAF3DE;color:#3B6D11}.m-patch{background:#FAEEDA;color:#854F0B}.m-del{background:#FCEBEB;color:#A32D2D}
+.api-path{font-family:var(--font-mono);color:var(--color-text-secondary);flex:1}
+.api-desc{color:var(--color-text-tertiary);font-size:11px}
+.tech-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px}
+.tech-row:last-child{border-bottom:none}
+.tech-label{color:var(--color-text-secondary);font-size:12px}
+.tech-val{font-family:var(--font-mono);font-size:11px;color:var(--color-text-primary)}
+.warn-box{background:var(--color-background-warning);border-left:3px solid var(--color-border-warning);border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;padding:10px 12px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin:0.75rem 0}
+.info-box{background:var(--color-background-info);border-left:3px solid var(--color-border-info);border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;padding:10px 12px;font-size:12px;color:var(--color-text-info);line-height:1.6;margin:0.75rem 0}
+.prompt-block{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:1rem 1.125rem;font-size:12px;font-family:var(--font-mono);color:var(--color-text-secondary);line-height:1.8;white-space:pre-wrap;margin:0.75rem 0}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:1.25rem 0}
+.tag{display:inline-block;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:4px;padding:2px 8px;font-size:11px;color:var(--color-text-secondary);margin:2px}
+.build-btn{padding:8px 16px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:12px;cursor:pointer;font-family:var(--font-sans)}
+.build-btn:hover{background:var(--color-background-secondary)}
+</style>
+
+<h2 class="sr-only">SwasthAI complete product specification — Patient Portal, Doctor Portal, AI analysis layer, and private payment system build guide</h2>
+
+<div class="wrap">
+<div class="tabs">
+  <button class="tab active" onclick="showPanel('overview',this)">Project Overview</button>
+  <button class="tab" onclick="showPanel('patient',this)">Patient Portal</button>
+  <button class="tab" onclick="showPanel('doctor',this)">Doctor Portal</button>
+  <button class="tab" onclick="showPanel('ai',this)">SwasthAI Engine</button>
+  <button class="tab" onclick="showPanel('payments',this)">Payments</button>
+  <button class="tab" onclick="showPanel('prompt',this)">Build Prompt</button>
+</div>
+
+<div id="panel-overview" class="panel active">
+  <div class="h1">SwasthAI — Complete Product Specification</div>
+  <div class="lead">Three portals. One AI brain. One private payment layer. India's missing health memory infrastructure — built production-ready in Next.js 15, TypeScript, PostgreSQL, Claude API, Razorpay, Umbra Protocol (Solana).</div>
+
+  <div class="grid3" style="margin-bottom:1.5rem">
+    <div class="card">
+      <div class="portal-badge pb-patient">Patient Portal</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">For patients & families</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.5">Upload records, see timeline, get alerts, book appointments, track habits, manage meds, share with family — all in one place.</div>
+    </div>
+    <div class="card">
+      <div class="portal-badge pb-doctor">Doctor Portal</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">For doctors & clinics</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.5">Pre-consult AI brief, patient queue, consent-gated timeline, voice notes, prescription management, follow-up automation.</div>
+    </div>
+    <div class="card">
+      <div class="portal-badge pb-ai">SwasthAI Engine</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">The AI intelligence layer</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.5">Extraction, normalization, risk scoring, trend detection, alert generation, doctor brief, symptom checker, multilingual NLP.</div>
+    </div>
+  </div>
+
+  <div class="h2">Architecture</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="grid2" style="gap:16px">
+      <div>
+        <div class="h3">Tech Stack</div>
+        <div class="tech-row"><span>Framework</span><span class="tech-val">Next.js 15 + App Router</span></div>
+        <div class="tech-row"><span>Language</span><span class="tech-val">TypeScript</span></div>
+        <div class="tech-row"><span>Database</span><span class="tech-val">PostgreSQL (Prisma ORM)</span></div>
+        <div class="tech-row"><span>Auth</span><span class="tech-val">Supabase (JWT)</span></div>
+        <div class="tech-row"><span>AI</span><span class="tech-val">Claude claude-opus-4-6 (Anthropic)</span></div>
+        <div class="tech-row"><span>Storage</span><span class="tech-val">Cloudflare R2</span></div>
+        <div class="tech-row"><span>Queue</span><span class="tech-val">BullMQ + Redis</span></div>
+        <div class="tech-row"><span>Notifications</span><span class="tech-val">Twilio WhatsApp + FCM</span></div>
+        <div class="tech-row"><span>Payments</span><span class="tech-val">Razorpay + Umbra (Solana)</span></div>
+        <div class="tech-row"><span>Styling</span><span class="tech-val">Tailwind CSS</span></div>
+      </div>
+      <div>
+        <div class="h3">What's Already Built</div>
+        <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Auth + Workspace system <span class="status-chip sc-done">Done</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Consent management <span class="status-chip sc-done">Done</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Clinical normalization (ICMR) <span class="status-chip sc-done">Done</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Risk scoring engine <span class="status-chip sc-done">Done</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Trend detection <span class="status-chip sc-done">Done</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Family delegation <span class="status-chip sc-done">Done</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">AI extraction engine <span class="status-chip sc-build">Needs Claude API</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Patient UI / All pages <span class="status-chip sc-build">Building</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Doctor Portal <span class="status-chip sc-new">New</span></div></div></div>
+        <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Private payments <span class="status-chip sc-new">New</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="h2">Three-Portal Data Flow</div>
+  <div class="card-surface">
+    <div style="font-size:12px;color:var(--color-text-secondary);line-height:2;font-family:var(--font-mono)">
+      Patient uploads report (PDF/image/WhatsApp)<br>
+      → R2 storage → BullMQ extraction queue<br>
+      → Claude API: extract labs, meds, diagnoses, dates<br>
+      → ICMR normalization → risk scoring → trend detection<br>
+      → alerts created → WhatsApp notification → patient dashboard<br>
+      → [with consent] → Doctor portal: pre-consult brief generated<br>
+      → Doctor views 1-page AI summary before consultation<br>
+      → Doctor adds notes → syncs back to patient timeline<br>
+      → [optional] Patient pays provider via Umbra stealth address<br>
+      → viewing key stored by patient → insurance proof on demand
+    </div>
+  </div>
+</div>
+
+<div id="panel-patient" class="panel">
+  <div class="portal-badge pb-patient">Patient Portal</div>
+  <div class="h1">Patient Portal — Full Feature Spec</div>
+  <div class="lead">The primary product. Mobile-first, works on 3G, Hindi+English UI. Feels like a trusted family health companion, not a medical system.</div>
+
+  <div class="h2">1. Onboarding Flow</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="flow-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Sign up with phone (OTP)</div><div class="step-desc">No email required. +91 mobile number → Supabase OTP → workspace created automatically.</div></div></div>
+    <div class="flow-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Profile setup</div><div class="step-desc">Name, age, gender, known conditions (diabetes, BP, thyroid — checkboxes in Hindi+English), primary doctor name.</div></div></div>
+    <div class="flow-step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Optional: Link ABHA ID</div><div class="step-desc">Enter 14-digit ABHA number → ABDM verification → auto-fetch historical records from health locker.</div></div></div>
+    <div class="flow-step"><div class="step-num">4</div><div class="step-body"><div class="step-title">First upload prompt</div><div class="step-desc">"Upload any old report to get started" — guided upload wizard with camera shortcut for phone users.</div></div></div>
+    <div class="flow-step"><div class="step-num">5</div><div class="step-body"><div class="step-title">WhatsApp bot connect</div><div class="step-desc">QR code to connect WhatsApp forward bot — patient can forward reports directly from WhatsApp forever after.</div></div></div>
+  </div>
+
+  <div class="h2">2. Dashboard (Home)</div>
+  <div class="grid2" style="margin-bottom:1rem">
+    <div class="card">
+      <div class="h3">Components</div>
+      <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Health Score ring</div><div class="feat-desc">0–100 composite score. Computed from: risk levels, trend directions, adherence, data freshness.</div></div></div>
+      <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">4 key metric cards</div><div class="feat-desc">Latest HbA1c, BP, TSH, Creatinine (or most relevant to conditions). NORMAL/WARN/CRITICAL badge.</div></div></div>
+      <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Alert banner strip</div><div class="feat-desc">Up to 2 active alerts shown inline. Critical = red, Warning = amber. Tap to see full alerts page.</div></div></div>
+      <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Next action card</div><div class="feat-desc">"What to do next" — top 1 task. Due date + priority. Large tap target.</div></div></div>
+      <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Recent records strip</div><div class="feat-desc">Last 3 uploaded documents with extraction status badge.</div></div></div>
+      <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Medication reminder</div><div class="feat-desc">Today's medication schedule from current prescriptions. Tap to mark taken.</div></div></div>
+    </div>
+    <div class="card">
+      <div class="h3">Files to build</div>
+      <div style="margin-bottom:8px"><span class="file-chip">app/product-v2/page.tsx</span><span class="file-chip">components/dashboard-page.tsx</span></div>
+      <div class="h3" style="margin-top:12px">API routes needed</div>
+      <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/workspaces/[id]/dashboard-summary</span></div>
+      <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/workspaces/[id]/health-score</span></div>
+      <div class="h3" style="margin-top:12px">Design tokens</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);line-height:1.8">
+        Font: DM Serif Display (headings) + DM Sans<br>
+        Primary: #0D3D2A (forest)<br>
+        Background: #FAFAF7 (cream)<br>
+        Alert red: #DC2626 | Amber: #D97706<br>
+        Cards: white + 1px #E8E4DC border
+      </div>
+    </div>
+  </div>
+
+  <div class="h2">3. Health Timeline</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Chronological event feed</div><div class="feat-desc">Lab reports, prescriptions, consultations, uploads in reverse-chronological order. Each entry shows: date, source, key values, extraction confidence.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Condition filters</div><div class="feat-desc">Filter by: All / Labs / Prescriptions / Visits / Reports. Secondary filter by condition (diabetes, hypertension).</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Trend sparklines</div><div class="feat-desc">Mini chart per tracked lab showing 6-month trend. Color: green=improving, amber=stable, red=worsening.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Tap to expand</div><div class="feat-desc">Tap any entry for full extraction detail: all labs, medications, doctor notes, follow-up instructions.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Add manual entry</div><div class="feat-desc">Log BP reading, blood sugar, weight, symptoms manually. Useful for home monitoring.</div></div></div>
+    <div style="margin-top:8px"><span class="file-chip">components/timeline-page.tsx</span><span class="file-chip">lib/trend-detection.ts</span><span class="file-chip">app/api/workspaces/[id]/timeline/route.ts</span></div>
+  </div>
+
+  <div class="h2">4. Document Upload (AI Extraction)</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Upload sources</div><div class="feat-desc">Camera photo, PDF file picker, WhatsApp forward (paste or phone share), voice note transcript, type manually.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Real-time extraction progress</div><div class="feat-desc">Upload → "Analyzing…" → progress bar → "Found 6 lab values, 3 medications" → review screen.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Correction UI</div><div class="feat-desc">Patient can correct any extracted value before saving. "Is this right? HbA1c = 8.9%" with edit inline.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Duplicate detection warning</div><div class="feat-desc">If same test done within 45 days: "You already have an HbA1c from Jan 15. Is this the same report?"</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Post-extraction actions</div><div class="feat-desc">Auto-generate care tasks, update health score, trigger alerts if critical values found, send WhatsApp summary.</div></div></div>
+  </div>
+
+  <div class="h2">5. Appointment Booking</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Book with saved doctors</div><div class="feat-desc">List of patient's regular doctors. Tap → select date/time → book. Doctor gets WhatsApp notification + AI brief link.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Appointment reminders</div><div class="feat-desc">WhatsApp reminder 24 hours before. 1 hour before: "Your pre-consult brief is ready — share with Dr. X."</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Pre-consult brief share</div><div class="feat-desc">One tap generates a shareable link to AI brief. Doctor opens on any device — no login required for 24h.</div></div></div>
+    <div style="margin-top:8px"><span class="file-chip">components/appointments-page.tsx</span><span class="file-chip">lib/appointment-store.ts</span></div>
+  </div>
+
+  <div class="h2">6. Medication Manager</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Current medication list</div><div class="feat-desc">Auto-populated from prescription extractions. Name, dose, frequency, prescribing doctor. Editable.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Daily reminder schedule</div><div class="feat-desc">Morning/evening pill reminders via WhatsApp. Patient marks taken/skipped. Adherence % tracked over time.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Refill alerts</div><div class="feat-desc">Last prescription 25+ days old → "Metformin refill likely needed." Alert + care task created.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Interaction checker</div><div class="feat-desc">On new prescription extracted → check against OpenFDA/RxNorm for dangerous interactions. Show warning if found.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Generic alternatives</div><div class="feat-desc">For each branded medication, show generic equivalent with price comparison. "Metformin 500mg generic: ₹12 vs ₹45 branded."</div></div></div>
+  </div>
+
+  <div class="h2">7. Habit + Symptom Tracker</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Daily log</div><div class="feat-desc">Quick log: mood (5-point), energy, sleep hours, exercise (yes/no), water intake. 30-second daily check-in.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Symptom checker (AI)</div><div class="feat-desc">Patient types/speaks: "I have been feeling dizzy for 3 days." Claude API responds in plain Hindi+English with: likely causes, urgency, whether to call doctor. Never diagnoses. Always: "Ask your doctor if symptoms continue."</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Correlations</div><div class="feat-desc">Auto-detect: "Your BP readings are higher on days you log poor sleep." Shown as insight cards on dashboard.</div></div></div>
+  </div>
+</div>
+
+<div id="panel-doctor" class="panel">
+  <div class="portal-badge pb-doctor">Doctor Portal</div>
+  <div class="h1">Doctor Portal — Full Feature Spec</div>
+  <div class="lead">Separate login. Clinic-branded. Shows only what patients consent to share. The single goal: save 5–8 minutes per consultation by giving doctors context before the patient sits down.</div>
+
+  <div class="info-box">Key insight: Doctors don't want another app. They want a 1-page brief before the patient walks in. Everything in this portal is designed around that single need.</div>
+
+  <div class="h2">1. Doctor Onboarding</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="flow-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Sign up with medical registration number</div><div class="step-desc">MCI/NMC number verification. Clinic name, specialty, address. Phone OTP for identity.</div></div></div>
+    <div class="flow-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Clinic workspace setup</div><div class="step-desc">Clinic name, logo, working hours, appointment duration (15/20/30 min). Multiple doctors can join one clinic.</div></div></div>
+    <div class="flow-step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Patient invite link</div><div class="step-desc">Doctor gets a unique link to share with patients: "swasthai.in/join/dr-mehta" — patient clicks → links their account to this doctor → consents to share records.</div></div></div>
+  </div>
+
+  <div class="h2">2. Today's Patient Queue</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Appointment list</div><div class="feat-desc">Chronological today's appointments. Patient name, age, condition tags, time slot, brief generation status.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Brief ready indicator</div><div class="feat-desc">"Brief ready" green badge when AI pre-consult brief has been generated for that patient. Tap to open.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Patient urgency flags</div><div class="feat-desc">Red dot if patient has a critical alert (e.g., HbA1c >9 flagged since last visit). Doctor sees this before entering the room.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Quick patient search</div><div class="feat-desc">Search by name, phone, ABHA ID. Works across all patients who have shared records with this doctor.</div></div></div>
+    <div style="margin-top:8px"><span class="file-chip">app/doctor/queue/page.tsx</span><span class="file-chip">components/doctor/patient-queue.tsx</span></div>
+  </div>
+
+  <div class="h2">3. Pre-Consult AI Brief (Core Feature)</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">1-page summary</div><div class="feat-desc">Auto-generated by Claude API 15 minutes before appointment. Reads from patient's consented timeline. Shows: patient line, urgent flags, recent labs, medications, trends, suggested discussion points.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Specialty-aware</div><div class="feat-desc">Endocrinologist brief focuses on glycemic data. Cardiologist gets BP trend + ECG notes. GP gets broad summary. Inferred from doctor's specialty at signup.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Confidence markers</div><div class="feat-desc">Each extracted value shows confidence level. Low-confidence values marked "⚠ verify against original." Doctor always has final say.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Shareable link</div><div class="feat-desc">Brief accessible via one-time URL (24h expiry). Doctor can open on phone, tablet, or desktop. No SwasthAI login required for brief-only access.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Offline PDF</div><div class="feat-desc">Download 1-page PDF brief for offline consultation. Clinic letterhead option for premium plans.</div></div></div>
+  </div>
+
+  <div class="h2">4. During Consultation</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Voice-to-text notes</div><div class="feat-desc">Doctor speaks consultation notes. Claude transcribes + structures into: diagnosis update, new medications, follow-up instructions. Auto-syncs to patient timeline with doctor's tag.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Patient timeline (read-only)</div><div class="feat-desc">Full patient health timeline visible during consultation. Doctor can reference any past report, medication, or value.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Add prescription</div><div class="feat-desc">Type new prescription → auto-checks interactions with patient's existing medications → adds to patient timeline → patient gets WhatsApp copy.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Order lab tests</div><div class="feat-desc">Select tests from list → auto-checks if same test done recently → creates care task on patient's app → WhatsApp reminder when due.</div></div></div>
+  </div>
+
+  <div class="h2">5. Follow-up Automation</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Set follow-up reminders</div><div class="feat-desc">"Remind patient to retest HbA1c in 8 weeks." Doctor sets it once → patient gets WhatsApp reminder 2 days before + 1 day before.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Lost-to-follow-up detection</div><div class="feat-desc">If patient doesn't return within expected window → doctor dashboard shows "Ramesh Patel — 6 weeks overdue for follow-up." Optional auto-WhatsApp.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-blue"></div><div><div class="feat-title">Clinic analytics</div><div class="feat-desc">How many patients retained, avg follow-up rate, most common conditions, alert frequency. For clinic billing plan.</div></div></div>
+    <div style="margin-top:8px"><span class="file-chip">app/doctor/</span><span class="file-chip">components/doctor/brief-view.tsx</span><span class="file-chip">components/doctor/consultation-notes.tsx</span><span class="file-chip">lib/doctor-store.ts</span></div>
+  </div>
+
+  <div class="h2">Doctor Portal — API Routes</div>
+  <div class="card">
+    <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/doctor/queue</span><span class="api-desc">Today's patient list</span></div>
+    <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/doctor/patients/[id]/brief</span><span class="api-desc">Get AI pre-consult brief</span></div>
+    <div class="api-row"><span class="method m-post">POST</span><span class="api-path">/api/doctor/patients/[id]/brief/generate</span><span class="api-desc">Trigger brief generation</span></div>
+    <div class="api-row"><span class="method m-post">POST</span><span class="api-path">/api/doctor/patients/[id]/consultation-notes</span><span class="api-desc">Save voice/typed notes</span></div>
+    <div class="api-row"><span class="method m-post">POST</span><span class="api-path">/api/doctor/patients/[id]/prescription</span><span class="api-desc">Add new prescription</span></div>
+    <div class="api-row"><span class="method m-post">POST</span><span class="api-path">/api/doctor/patients/[id]/follow-up</span><span class="api-desc">Schedule follow-up reminder</span></div>
+    <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/doctor/patients/[id]/timeline</span><span class="api-desc">Patient timeline (consent-gated)</span></div>
+    <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/doctor/analytics</span><span class="api-desc">Clinic analytics dashboard</span></div>
+    <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/brief/public/[token]</span><span class="api-desc">Shareable brief (no login)</span></div>
+  </div>
+</div>
+
+<div id="panel-ai" class="panel">
+  <div class="portal-badge pb-ai">SwasthAI Engine</div>
+  <div class="h1">SwasthAI Intelligence Layer</div>
+  <div class="lead">The AI brain that makes both portals valuable. Every service runs asynchronously. Patient uploads a document → engine processes in background → results appear within 30 seconds.</div>
+
+  <div class="h2">1. Document Extraction Service</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Claude vision API (images)</div><div class="feat-desc">JPG/PNG photos of lab reports, handwritten prescriptions. Claude reads the image directly — no OCR service needed.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Claude text API (PDF/WhatsApp)</div><div class="feat-desc">PDF text extraction → Claude structured output. WhatsApp forwards → channel normalization → Claude extraction.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Output schema</div><div class="feat-desc">labValues[], medications[], diagnoses[], followUpInstructions[], documentType, language, confidence. Stored in extractedData JSON column.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Multilingual</div><div class="feat-desc">Claude handles Hindi, Gujarati, Tamil, Bengali, Marathi natively. No separate NLP layer. No pre-processing required.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-green"></div><div><div class="feat-title">Correction loop</div><div class="feat-desc">Patient can correct any value → correction stored with original extraction → doctor brief shows corrected value + "patient corrected" flag.</div></div></div>
+    <div style="margin-top:8px"><span class="file-chip">lib/document-ingestion.ts</span><span class="file-chip">workers/extraction-worker.ts</span></div>
+  </div>
+
+  <div class="h2">2. Clinical Intelligence Pipeline</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="flow-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Lab normalization (ICMR/WHO)</div><div class="step-desc">Age + sex adjusted ranges. Child/adult/elderly tiers. 50+ tests. Output: NORMAL / LOW / HIGH / CRITICAL per value. File: lib/clinical-normalization.ts (549 lines — done)</div></div></div>
+    <div class="flow-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Risk scoring</div><div class="step-desc">Diabetes, CKD, CVD, liver, thyroid risk. 0–100 score with contributing factor explanations. File: lib/risk-scoring.ts (done)</div></div></div>
+    <div class="flow-step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Trend detection</div><div class="step-desc">Single-lab: IMPROVING/STABLE/WORSENING with acceleration detection. Multi-lab: metabolic syndrome patterns, early CKD patterns. File: lib/trend-detection.ts (done)</div></div></div>
+    <div class="flow-step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Alert generation</div><div class="step-desc">CRITICAL_LAB_VALUE, ABNORMAL_TREND, MEDICATION_CONTRAINDICATION. 3-tier severity. Deduplication. WhatsApp trigger. File: lib/risk-store.ts (done)</div></div></div>
+    <div class="flow-step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Duplicate test detection</div><div class="step-desc">Same test within 45 days → patient warning + recommendation. File: lib/duplicate-test-store.ts (done)</div></div></div>
+    <div class="flow-step"><div class="step-num">6</div><div class="step-body"><div class="step-title">Doctor brief generation</div><div class="step-desc">Claude API with specialty-aware prompt. 1-page narrative. Urgent flags, trends, medication review, suggested discussion points. Cached 1 hour. File: lib/product-engine.ts → upgrade to AI</div></div></div>
+  </div>
+
+  <div class="h2">3. Symptom Checker (Patient-facing AI)</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Natural language input</div><div class="feat-desc">Patient types/speaks in any language: "Teen din se chakkar aa raha hai" (Hindi: "dizzy for 3 days"). Claude responds in same language.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-purple"></div><div><div class="feat-title">Context-aware</div><div class="feat-desc">Claude receives patient's conditions, current medications, recent lab values before answering. Response is personalized, not generic.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Urgency triage</div><div class="feat-desc">Output: urgency level (see doctor now / within a week / monitor at home) + reasons + relevant warning symptoms to watch.</div></div></div>
+    <div class="warn-box">Safety constraint: SwasthAI never diagnoses. System prompt always appended: "You are a health information assistant. Never provide a diagnosis. Always end with: consult your doctor if symptoms persist or worsen."</div>
+    <div style="margin-top:8px"><span class="file-chip">app/api/ai/symptom-check/route.ts</span><span class="file-chip">components/symptom-checker.tsx</span></div>
+  </div>
+
+  <div class="h2">4. Agentic Pipeline (Multi-step)</div>
+  <div class="card">
+    <div style="font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono);line-height:2">
+Document uploaded → queue job<br>
+→ Step 1: extractDocumentContent() — Claude API<br>
+→ Step 2: deduplicateTests() — check against history<br>
+→ Step 3: normalizeExtractedLabs() — ICMR ranges<br>
+→ Step 4: computeRiskScores() — all conditions<br>
+→ Step 5: detectTrends() — delta from previous<br>
+→ Step 6: generateAlerts() — triage + severity<br>
+→ Step 7: invalidateBriefCache() — doctor brief stale<br>
+→ Step 8: sendWhatsApp() — patient notification<br>
+→ All steps isolated — failure in one doesn't break others
+    </div>
+    <div style="margin-top:8px"><span class="file-chip">lib/agents/document-intelligence-agent.ts</span><span class="file-chip">workers/extraction-worker.ts</span></div>
+  </div>
+</div>
+
+<div id="panel-payments" class="panel">
+  <div class="portal-badge pb-pay">Payment System</div>
+  <div class="h1">Payment System — Razorpay + Umbra Protocol</div>
+  <div class="lead">Two payment systems. Razorpay for subscriptions (standard). Umbra Protocol for sensitive healthcare payments (private). Both live in the same codebase.</div>
+
+  <div class="h2">Part 1 — Razorpay Subscriptions</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="grid2" style="gap:16px">
+      <div>
+        <div class="h3">Plans</div>
+        <div class="tech-row"><span>Free</span><span class="tech-val">₹0 — 10 docs, 5 AI</span></div>
+        <div class="tech-row"><span>Individual</span><span class="tech-val">₹99/mo — 200 docs</span></div>
+        <div class="tech-row"><span>Family</span><span class="tech-val">₹299/mo — 8 members</span></div>
+        <div class="tech-row"><span>Clinic</span><span class="tech-val">₹5,000/mo — unlimited</span></div>
+        <div class="tech-row"><span>Enterprise</span><span class="tech-val">₹25,000/mo — custom</span></div>
+      </div>
+      <div>
+        <div class="h3">API Routes</div>
+        <div class="api-row"><span class="method m-post">POST</span><span class="api-path">/api/billing/subscribe</span></div>
+        <div class="api-row"><span class="method m-post">POST</span><span class="api-path">/api/billing/webhook</span></div>
+        <div class="api-row"><span class="method m-get">GET</span><span class="api-path">/api/billing/status</span></div>
+        <div class="api-row"><span class="method m-post">POST</span><span class="api-path">/api/billing/cancel</span></div>
+        <div style="margin-top:8px"><span class="file-chip">lib/billing.ts</span></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="h3">Implementation</div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Plan gating middleware</div><div class="feat-desc">Every API route checks subscription plan before serving. Free tier: upload blocked after 10 docs. Upgrade prompt shown.</div></div></div>
+    <div class="feature-row"><div class="feat-dot fd-amber"></div><div><div class="feat-title">Webhook → Prisma update</div><div class="feat-desc">Razorpay sends subscription.activated / subscription.charged / subscription.cancelled → update Subscription table → clear plan cache.</div></div></div>
+  </div>
+
+  <div class="h2">Part 2 — Private Healthcare Payments (Umbra Protocol)</div>
+  <div class="info-box">Problem: Paying an HIV clinic, a therapist, or an addiction specialist via UPI creates a visible transaction trail. In India, this can affect employment, insurance, and family relationships. Umbra Protocol solves this.</div>
+
+  <div class="card" style="margin-bottom:1rem">
+    <div class="h3">How Umbra works</div>
+    <div class="flow-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Provider registers their stealth key pair</div><div class="step-desc">Provider generates spending + viewing key pair once. Registers on SwasthAI. Their real wallet is never public.</div></div></div>
+    <div class="flow-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Patient selects provider + amount</div><div class="step-desc">SwasthAI generates a one-time stealth address for this payment. Uses ephemeral keypair + provider's public key → ECDH → stealth address.</div></div></div>
+    <div class="flow-step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Patient sends crypto to stealth address</div><div class="step-desc">SOL or USDC sent to stealth address on Solana. On-chain record: "Wallet A → Address B: 0.014 SOL." No names. No category. Nothing else.</div></div></div>
+    <div class="flow-step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Provider scans and claims</div><div class="step-desc">Provider uses their viewing key + SwasthAI scanning service to find payments addressed to them. Claims to their actual wallet. Patient's address never linked to provider's address.</div></div></div>
+    <div class="flow-step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Patient stores viewing key</div><div class="step-desc">Patient receives a viewing key (base64 string). This proves: amount + "Healthcare Service" (generic category). Used for insurance reimbursement.</div></div></div>
+    <div class="flow-step"><div class="step-num">6</div><div class="step-body"><div class="step-title">Insurance proof on demand</div><div class="step-desc">Patient provides viewing key + payment ID → SwasthAI generates redacted proof PDF: amount, date, "Healthcare Service." Provider name never revealed.</div></div></div>
+  </div>
+
+  <div class="h2">Payment Categories + Privacy Mapping</div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="grid2" style="font-size:12px;gap:8px">
+      <div class="card-surface"><div style="font-weight:500;margin-bottom:3px">Mental Health</div><div style="color:var(--color-text-secondary)">On-chain: Healthcare Service</div></div>
+      <div class="card-surface"><div style="font-weight:500;margin-bottom:3px">Reproductive Health</div><div style="color:var(--color-text-secondary)">On-chain: Healthcare Service</div></div>
+      <div class="card-surface"><div style="font-weight:500;margin-bottom:3px">Addiction Treatment</div><div style="color:var(--color-text-secondary)">On-chain: Healthcare Service</div></div>
+      <div class="card-surface"><div style="font-weight:500;margin-bottom:3px">Laboratory Test</div><div style="color:var(--color-text-secondary)">On-chain: Diagnostic Testing</div></div>
+      <div class="card-surface"><div style="font-weight:500;margin-bottom:3px">Specialist Consult</div><div style="color:var(--color-text-secondary)">On-chain: Specialist Consultation</div></div>
+      <div class="card-surface"><div style="font-weight:500;margin-bottom:3px">General Consult</div><div style="color:var(--color-text-secondary)">On-chain: Medical Consultation</div></div>
+    </div>
+    <div class="warn-box" style="margin-top:12px">Sensitive categories (Mental Health, Reproductive, Addiction) all map to the same generic "Healthcare Service" label — even in insurance proofs. Insurance only sees amount + date + generic category.</div>
+  </div>
+
+  <div class="h2">Files to Build</div>
+  <div style="flex-wrap:wrap;display:flex;gap:4px">
+    <span class="file-chip">lib/payments/private-payment.ts</span>
+    <span class="file-chip">lib/payments/solana-consent.ts</span>
+    <span class="file-chip">lib/billing.ts</span>
+    <span class="file-chip">app/api/payments/initiate/route.ts</span>
+    <span class="file-chip">app/api/payments/verify/route.ts</span>
+    <span class="file-chip">app/api/payments/proof/route.ts</span>
+    <span class="file-chip">app/api/billing/subscribe/route.ts</span>
+    <span class="file-chip">app/api/billing/webhook/route.ts</span>
+    <span class="file-chip">components/payments/private-pay-wizard.tsx</span>
+    <span class="file-chip">components/payments/insurance-proof.tsx</span>
+    <span class="file-chip">components/billing/upgrade-prompt.tsx</span>
+  </div>
+</div>
+
+<div id="panel-prompt" class="panel">
+  <div class="h1">Master Build Prompt</div>
+  <div class="lead">Copy this prompt into any AI coding tool (Claude Code, Cursor, Copilot, Repl.it) to build the complete SwasthAI product. Paste the codebase context first, then this prompt.</div>
+
+  <div class="h2">Patient Portal Prompt</div>
+  <div class="prompt-block">You are building SwasthAI — an AI-powered health memory app for Indian patients.
+
+TECH STACK: Next.js 15, TypeScript, Tailwind CSS, Prisma + PostgreSQL, Supabase auth, Claude API (claude-opus-4-6), Cloudflare R2, BullMQ + Redis, Twilio WhatsApp, Razorpay.
+
+DESIGN SYSTEM:
+- Fonts: DM Serif Display (headings/brand) + DM Sans (body)
+- Primary: #0D3D2A (forest green) — trust, medical
+- Background: #FAFAF7 (cream) — warm, not clinical
+- Danger: #DC2626 | Warning: #D97706 | Success: #2E7D5A
+- Cards: white + 1px solid #E8E4DC border, 12px radius
+- All alerts: 3-tier (red=critical, amber=warning, green=info)
+- Bottom nav on mobile, sidebar on desktop
+- Min tap target: 44px. Min font: 12px.
+
+BUILD THE PATIENT PORTAL with these pages:
+1. /product-v2 — Dashboard: health score ring, 4 metric cards (HbA1c/BP/TSH/Creatinine), alert banners, upcoming tasks, recent records, medication reminder
+2. /product-v2/timeline — Chronological health events with trend sparklines, condition filters, expandable entries
+3. /product-v2/documents — Upload wizard (camera/PDF/WhatsApp/voice), real-time extraction progress, correction UI, duplicate detection warning, document list with status
+4. /product-v2/alerts — Alert list with 3-tier severity, acknowledge/resolve lifecycle, WhatsApp notification trigger
+5. /product-v2/tasks — Care task list (pending/completed), add task, priority badges, due dates
+6. /product-v2/medications — Current meds from prescriptions, daily reminder toggle, refill alerts, interaction checker
+7. /product-v2/family — Family member management, role assignment (Manager/Viewer), consent scope selector, access event log
+8. /product-v2/appointments — Book with saved doctors, appointment list, pre-consult brief share button
+9. /product-v2/symptoms — AI symptom checker (Claude API), context-aware, Hindi+English, urgency triage
+10. /product-v2/payments — Private payment wizard (Umbra Protocol), provider selection, stealth address generation, viewing key storage, insurance proof generation
+
+SAFETY RULES (never violate):
+- AI never diagnoses. Always: "Ask your doctor if symptoms persist."
+- All recommendations cite source document.
+- Consent must be explicit before sharing with doctor.
+- Viewing key never stored server-side — returned to patient only.
+- Every alert has a dismiss/acknowledge action.
+
+EXISTING BACKEND (already built — do not rebuild):
+lib/auth-server.ts, lib/workspace-store.ts, lib/consent-store.ts, lib/care-plan-store.ts, lib/family-store.ts, lib/duplicate-test-store.ts, lib/clinical-normalization.ts (549 lines), lib/risk-scoring.ts, lib/trend-detection.ts, lib/risk-store.ts, lib/document-store.ts
+
+BUILD WHAT'S MISSING:
+lib/document-ingestion.ts — REPLACE regex with Claude API extraction
+lib/storage.ts — CREATE Cloudflare R2 upload/download
+lib/billing.ts — CREATE Razorpay subscriptions
+lib/notifications.ts — CREATE Twilio WhatsApp
+lib/payments/private-payment.ts — CREATE Umbra stealth payments
+All components listed above under each route</div>
+
+  <div class="h2">Doctor Portal Prompt</div>
+  <div class="prompt-block">BUILD THE DOCTOR PORTAL at /doctor/* as a separate authenticated area.
+
+Separate Supabase role: DOCTOR. Doctor login via medical registration number + OTP.
+
+PAGES:
+1. /doctor — Today's patient queue. Appointment list, brief-ready badges, urgency flags, patient search.
+2. /doctor/patients/[id] — Patient full view: timeline (consent-gated), active alerts, medications, risk scores.
+3. /doctor/patients/[id]/brief — AI pre-consult brief. Specialty-aware. Urgent flags. Trends. Suggested discussion points. Print/PDF/share link.
+4. /doctor/patients/[id]/consult — During consultation: voice-to-text notes, add prescription (interaction check), order labs, set follow-up.
+5. /doctor/analytics — Clinic metrics: patient retention, follow-up rates, most common conditions, alert frequencies.
+6. /doctor/settings — Clinic profile, specialty, working hours, appointment duration, patient invite link.
+
+BRIEF GENERATION (lib/product-engine.ts → upgrade):
+- Call Claude API with: patient conditions, last 90 days timeline, all active alerts, risk scores, current medications
+- Prompt includes specialty context from doctor's profile
+- Output: patientLine, urgentFlags[], recentHighlights[], riskFlags[], suggestedActions[], medicationFlags[]
+- Cache for 1 hour per patient per doctor
+- Shareable via /api/brief/public/[token] — no login required, 24h expiry
+
+CONSENT ENFORCEMENT (missing — must add):
+- Every /doctor/* route that returns patient data must check ConsentGrant table
+- Grant must be ACTIVE + scope must include requested data type
+- If no consent: return 403 with "Patient has not shared this data type"</div>
+
+  <div class="h2">Environment Variables Required</div>
+  <div class="card-surface" style="font-size:12px;font-family:var(--font-mono);line-height:2;color:var(--color-text-secondary)">
+ANTHROPIC_API_KEY=sk-ant-...<br>
+CLOUDFLARE_ACCOUNT_ID=...<br>
+R2_ACCESS_KEY_ID=...<br>
+R2_SECRET_ACCESS_KEY=...<br>
+R2_BUCKET_NAME=swasthai-documents<br>
+REDIS_URL=redis://localhost:6379<br>
+TWILIO_ACCOUNT_SID=AC...<br>
+TWILIO_AUTH_TOKEN=...<br>
+TWILIO_WHATSAPP_NUMBER=+14155238886<br>
+RAZORPAY_KEY_ID=rzp_live_...<br>
+RAZORPAY_KEY_SECRET=...<br>
+RAZORPAY_WEBHOOK_SECRET=...<br>
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com<br>
+PROOF_SIGNING_SECRET=... (random 32-char secret)<br>
+NEXT_PUBLIC_APP_URL=https://swasthai.in<br>
+ABDM_BASE_URL=https://sandbox.abdm.gov.in<br>
+ABDM_CLIENT_ID=...<br>
+ABDM_CLIENT_SECRET=...
+  </div>
+
+  <div style="margin-top:1.5rem;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="build-btn" onclick="sendPrompt('Now build the Patient Portal dashboard page component for SwasthAI using the spec above. Start with components/dashboard-page.tsx with all the features: health score ring, 4 metric cards, alert banners, tasks strip, recent records.')">Build Patient Dashboard ↗</button>
+    <button class="build-btn" onclick="sendPrompt('Build the Doctor Portal for SwasthAI — start with the patient queue page at app/doctor/page.tsx and the pre-consult AI brief component at components/doctor/brief-view.tsx')">Build Doctor Portal ↗</button>
+    <button class="build-btn" onclick="sendPrompt('Build the private healthcare payment wizard for SwasthAI using Umbra Protocol stealth addresses on Solana. Create lib/payments/private-payment.ts and components/payments/private-pay-wizard.tsx')">Build Private Pay ↗</button>
+    <button class="build-btn" onclick="sendPrompt('Set up Razorpay subscriptions for SwasthAI. Create lib/billing.ts with all plan definitions, app/api/billing/subscribe/route.ts and app/api/billing/webhook/route.ts with signature verification')">Build Billing ↗</button>
+  </div>
+</div>
+
+</div>
+
+<script>
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
