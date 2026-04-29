@@ -31,12 +31,20 @@ export default function AuthScreen() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+  const [hintType, setHintType] = useState<"info" | "success" | "error">("info");
   const [demoCode, setDemoCode] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [codeError, setCodeError] = useState<string | null>(null);
 
   const sendCode = async () => {
+    setPhoneError(null);
     const cleaned = phone.replace(/\D/g, "");
+    if (!cleaned) {
+      setPhoneError("Enter your phone number");
+      return;
+    }
     if (cleaned.length < 8) {
-      Alert.alert("Phone needed", "Enter your mobile number with country code.");
+      setPhoneError("Enter at least 8 digits (with country code)");
       return;
     }
     setBusy(true);
@@ -48,20 +56,27 @@ export default function AuthScreen() {
       setStep("code");
       if (!r.smsConfigured && r.demoCode) {
         setDemoCode(r.demoCode);
-        setHint(`SMS isn't configured yet — using demo code ${r.demoCode}.`);
+        setHintType("info");
+        setHint(`Demo: Tap the button below to use code ${r.demoCode}`);
       } else {
-        setHint(`Code sent to ${r.phone}.`);
+        setHintType("success");
+        setHint(`Code sent to ${r.phone}. Check SMS.`);
       }
     } catch (err) {
-      Alert.alert("Could not send code", (err as Error).message);
+      setPhoneError((err as Error).message || "Could not send code");
     } finally {
       setBusy(false);
     }
   };
 
   const verify = async () => {
+    setCodeError(null);
+    if (!code.trim()) {
+      setCodeError("Enter the 6-digit code");
+      return;
+    }
     if (code.trim().length < 4) {
-      Alert.alert("Enter the code", "Enter the 6-digit code from the SMS.");
+      setCodeError("Code must be at least 4 digits");
       return;
     }
     setBusy(true);
@@ -70,7 +85,7 @@ export default function AuthScreen() {
       await signIn(r.token, r.user);
       router.replace("/");
     } catch (err) {
-      Alert.alert("Could not sign in", (err as Error).message);
+      setCodeError((err as Error).message || "Verification failed");
     } finally {
       setBusy(false);
     }
@@ -84,109 +99,221 @@ export default function AuthScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 32 },
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 },
         ]}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={true}
       >
-        <View style={[styles.brandDot, { backgroundColor: colors.primary }]}>
-          <Feather name="activity" size={22} color="#fff" />
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={[styles.brandDot, { backgroundColor: colors.primary }]}>
+            <Feather name="activity" size={24} color="#fff" />
+          </View>
+          <Text style={[styles.title, { color: colors.foreground }]}>SwasthAI</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+            Your private health memory
+          </Text>
         </View>
-        <Text style={[styles.title, { color: colors.foreground }]}>SwasthAI</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          Your private health memory.{"\n"}Sign in with your mobile number.
-        </Text>
 
+        {/* Content */}
         {step === "phone" ? (
-          <View style={styles.card}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>Mobile number</Text>
-            <TextInput
-              value={phone}
-              onChangeText={setPhone}
-              placeholder="+91 98765 43210"
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="phone-pad"
-              autoComplete="tel"
-              style={[
-                styles.input,
-                { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card },
-              ]}
-            />
+          <View style={styles.form}>
+            <View style={styles.stepIndicator}>
+              <View style={[styles.step, { backgroundColor: colors.primary }]}>
+                <Text style={styles.stepNumber}>1</Text>
+              </View>
+              <View style={[styles.stepLine, { backgroundColor: colors.border }]} />
+              <View style={[styles.step, { backgroundColor: colors.border }]}>
+                <Text style={[styles.stepNumber, { color: colors.mutedForeground }]}>2</Text>
+              </View>
+            </View>
+
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              Enter your mobile number
+            </Text>
+            <Text style={[styles.sectionDesc, { color: colors.mutedForeground }]}>
+              We'll send you a secure code to verify it's really you.
+            </Text>
+
+            <View style={styles.inputWrapper}>
+              <View style={[styles.inputContainer, { borderColor: phoneError ? colors.destructive : colors.border, backgroundColor: colors.card }]}>
+                <Feather name="phone" size={16} color={colors.mutedForeground} style={styles.inputIcon} />
+                <TextInput
+                  value={phone}
+                  onChangeText={(val) => {
+                    setPhone(val);
+                    setPhoneError(null);
+                  }}
+                  placeholder="+91 98765 43210"
+                  placeholderTextColor={colors.mutedForeground}
+                  keyboardType="phone-pad"
+                  autoComplete="tel"
+                  editable={!busy}
+                  style={[
+                    styles.input,
+                    { color: colors.foreground },
+                  ]}
+                />
+              </View>
+              {phoneError ? (
+                <View style={styles.errorContainer}>
+                  <Feather name="alert-circle" size={12} color={colors.destructive} />
+                  <Text style={[styles.errorText, { color: colors.destructive }]}>{phoneError}</Text>
+                </View>
+              ) : null}
+            </View>
+
             <Pressable
               onPress={sendCode}
-              disabled={busy}
-              style={[styles.cta, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
+              disabled={busy || !phone.trim()}
+              style={({ pressed }) => [
+                styles.cta,
+                {
+                  backgroundColor: colors.primary,
+                  opacity: busy || !phone.trim() ? 0.5 : pressed ? 0.9 : 1,
+                },
+              ]}
             >
               {busy ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <>
                   <Feather name="send" size={16} color="#fff" />
-                  <Text style={styles.ctaText}>Send code</Text>
+                  <Text style={styles.ctaText}>Send secure code</Text>
                 </>
               )}
             </Pressable>
-            <Text style={[styles.smallNote, { color: colors.mutedForeground }]}>
-              We send a one-time code over SMS. We never share your number with anyone — ever.
+
+            <Text style={[styles.note, { color: colors.mutedForeground }]}>
+              A one-time code will be sent via SMS. Never shared. No ads, no tracking.
             </Text>
           </View>
         ) : (
-          <View style={styles.card}>
-            <Text style={[styles.label, { color: colors.mutedForeground }]}>
-              Code sent to {normalizedPhone}
+          <View style={styles.form}>
+            <View style={styles.stepIndicator}>
+              <View style={[styles.step, { backgroundColor: colors.primary }]}>
+                <Feather name="check" size={14} color="#fff" />
+              </View>
+              <View style={[styles.stepLine, { backgroundColor: colors.primary }]} />
+              <View style={[styles.step, { backgroundColor: colors.primary }]}>
+                <Text style={styles.stepNumber}>2</Text>
+              </View>
+            </View>
+
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              Verify your code
             </Text>
-            <TextInput
-              value={code}
-              onChangeText={setCode}
-              placeholder="6-digit code"
-              placeholderTextColor={colors.mutedForeground}
-              keyboardType="number-pad"
-              maxLength={6}
-              autoFocus
-              style={[
-                styles.input,
-                styles.codeInput,
-                { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card },
-              ]}
-            />
+            <Text style={[styles.sectionDesc, { color: colors.mutedForeground }]}>
+              Enter the 6-digit code sent to{"\n"}
+              <Text style={{ fontFamily: "Inter_600SemiBold" }}>{normalizedPhone}</Text>
+            </Text>
+
+            <View style={styles.inputWrapper}>
+              <View style={[styles.inputContainer, { borderColor: codeError ? colors.destructive : colors.border, backgroundColor: colors.card }]}>
+                <Feather name="shield" size={16} color={colors.mutedForeground} style={styles.inputIcon} />
+                <TextInput
+                  value={code}
+                  onChangeText={(val) => {
+                    setCode(val.replace(/[^0-9]/g, ""));
+                    setCodeError(null);
+                  }}
+                  placeholder="000000"
+                  placeholderTextColor={colors.mutedForeground}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  autoFocus
+                  editable={!busy}
+                  style={[
+                    styles.codeInput,
+                    { color: colors.foreground },
+                  ]}
+                />
+              </View>
+              {codeError ? (
+                <View style={styles.errorContainer}>
+                  <Feather name="alert-circle" size={12} color={colors.destructive} />
+                  <Text style={[styles.errorText, { color: colors.destructive }]}>{codeError}</Text>
+                </View>
+              ) : null}
+            </View>
+
             {demoCode ? (
-              <Pressable onPress={() => setCode(demoCode)} style={styles.demoChip}>
-                <Feather name="zap" size={12} color={colors.primary} />
+              <Pressable 
+                onPress={() => setCode(demoCode)} 
+                style={({ pressed }) => [
+                  styles.demoChip,
+                  { backgroundColor: colors.primaryPale, opacity: pressed ? 0.8 : 1 }
+                ]}
+              >
+                <Feather name="zap" size={14} color={colors.primary} />
                 <Text style={[styles.demoChipText, { color: colors.primary }]}>
-                  Tap to use demo code {demoCode}
+                  Demo: Use code {demoCode}
                 </Text>
               </Pressable>
             ) : null}
+
             <Pressable
               onPress={verify}
-              disabled={busy}
-              style={[styles.cta, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
+              disabled={busy || code.length < 4}
+              style={({ pressed }) => [
+                styles.cta,
+                {
+                  backgroundColor: colors.primary,
+                  opacity: busy || code.length < 4 ? 0.5 : pressed ? 0.9 : 1,
+                },
+              ]}
             >
               {busy ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <>
-                  <Feather name="check" size={16} color="#fff" />
-                  <Text style={styles.ctaText}>Verify and continue</Text>
+                  <Feather name="check-circle" size={16} color="#fff" />
+                  <Text style={styles.ctaText}>Verify and sign in</Text>
                 </>
               )}
             </Pressable>
-            <Pressable onPress={() => setStep("phone")} style={styles.linkButton}>
-              <Text style={[styles.linkText, { color: colors.mutedForeground }]}>
+
+            <Pressable 
+              onPress={() => { setStep("phone"); setPhone(""); setCode(""); setPhoneError(null); setCodeError(null); }} 
+              disabled={busy}
+              style={({ pressed }) => [styles.linkButton, { opacity: pressed ? 0.6 : 1 }]}
+            >
+              <Feather name="arrow-left" size={14} color={colors.primary} />
+              <Text style={[styles.linkText, { color: colors.primary }]}>
                 Use a different number
               </Text>
             </Pressable>
           </View>
         )}
 
+        {/* Messages */}
         {hint ? (
-          <Text style={[styles.hint, { color: colors.mutedForeground }]}>{hint}</Text>
+          <View style={[
+            styles.messageBox,
+            {
+              backgroundColor: hintType === "success" ? colors.primaryPale : colors.card,
+              borderColor: hintType === "success" ? colors.primary : colors.border,
+            }
+          ]}>
+            <Feather 
+              name={hintType === "success" ? "check-circle" : "info"} 
+              size={14} 
+              color={hintType === "success" ? colors.primary : colors.mutedForeground}
+            />
+            <Text style={[styles.messageText, { color: hintType === "success" ? colors.primary : colors.mutedForeground }]}>
+              {hint}
+            </Text>
+          </View>
         ) : null}
 
-        <View style={[styles.legalRow]}>
-          <Feather name="lock" size={12} color={colors.mutedForeground} />
-          <Text style={[styles.legalText, { color: colors.mutedForeground }]}>
-            ABHA-aligned. End-to-end private. You own your data.
-          </Text>
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={styles.securityBadge}>
+            <Feather name="lock" size={12} color={colors.primary} />
+            <Text style={[styles.securityText, { color: colors.mutedForeground }]}>
+              ABHA-aligned • End-to-end encrypted • You own your data
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -194,106 +321,173 @@ export default function AuthScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingHorizontal: 24, gap: 16 },
+  scroll: { paddingHorizontal: 20, gap: 0 },
+  header: { alignItems: "center", marginBottom: 32, marginTop: 8 },
   brandDot: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: 60,
+    height: 60,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
+    marginBottom: 16,
   },
   title: {
     fontFamily: "DMSerifDisplay_400Regular",
-    fontSize: 36,
-    letterSpacing: -1,
+    fontSize: 32,
+    letterSpacing: -0.5,
+    marginBottom: 8,
+    textAlign: "center",
   },
   subtitle: {
     fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    lineHeight: 21,
-    marginBottom: 24,
-  },
-  card: {
-    gap: 12,
-    marginBottom: 8,
-  },
-  label: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
-  input: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    fontFamily: "Inter_500Medium",
-    fontSize: 16,
-  },
-  codeInput: {
-    letterSpacing: 6,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: "center",
-    fontSize: 22,
-    fontFamily: "Inter_700Bold",
   },
-  cta: {
+
+  form: { gap: 24, marginBottom: 24 },
+
+  stepIndicator: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    marginBottom: 12,
+  },
+  step: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepNumber: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    color: "#fff",
+  },
+  stepLine: {
+    height: 2,
+    flex: 1,
+    maxWidth: 30,
+  },
+
+  sectionTitle: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 18,
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  sectionDesc: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+
+  inputWrapper: { gap: 8, marginBottom: 8 },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    height: 50,
+    gap: 10,
+  },
+  inputIcon: { width: 16, height: 16 },
+  input: {
+    flex: 1,
+    fontFamily: "Inter_400Regular",
+    fontSize: 15,
+    paddingVertical: 12,
+  },
+  codeInput: {
+    letterSpacing: 8,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 24,
+  },
+
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 4,
+  },
+  errorText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+  },
+
+  demoChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  demoChipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 13,
+  },
+
+  cta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
     paddingVertical: 14,
     borderRadius: 12,
+    marginVertical: 8,
   },
   ctaText: {
     color: "#fff",
     fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
+    fontSize: 15,
   },
-  smallNote: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    lineHeight: 17,
-    marginTop: 4,
-  },
-  demoChip: {
+
+  linkButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    alignSelf: "flex-start",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 16,
-    backgroundColor: "rgba(13,61,42,0.08)",
-  },
-  demoChipText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-  },
-  linkButton: {
-    alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 12,
   },
   linkText: {
     fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    textDecorationLine: "underline",
+    fontSize: 14,
   },
-  hint: {
+
+  messageBox: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 20,
+  },
+  messageText: {
     fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    textAlign: "center",
+    fontSize: 13,
+    lineHeight: 18,
+    flex: 1,
   },
-  legalRow: {
+
+  footer: { marginBottom: 8 },
+  securityBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 24,
     justifyContent: "center",
   },
-  legalText: {
+  securityText: {
     fontFamily: "Inter_400Regular",
     fontSize: 11,
+    lineHeight: 16,
+    textAlign: "center",
   },
 });

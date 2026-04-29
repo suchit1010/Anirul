@@ -75,6 +75,8 @@ export default function HomeScreen() {
             },
           ]}
         >
+          <View pointerEvents="none" style={styles.heroGlowOne} />
+          <View pointerEvents="none" style={styles.heroGlowTwo} />
           <View style={{ width: "100%", maxWidth: maxW, alignSelf: "center" }}>
             <View style={styles.heroTopRow}>
               <View style={{ flex: 1 }}>
@@ -360,6 +362,26 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+    overflow: "hidden",
+    position: "relative",
+  },
+  heroGlowOne: {
+    position: "absolute",
+    right: -70,
+    top: -50,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255,255,255,0.08)",
+  },
+  heroGlowTwo: {
+    position: "absolute",
+    left: -60,
+    bottom: -80,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   brandRow: {
     flexDirection: "row",

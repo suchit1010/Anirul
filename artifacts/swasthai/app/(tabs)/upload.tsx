@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SectionHeader } from "@/components/SectionHeader";
+import { useResponsive } from "@/hooks/useResponsive";
 import { useColors } from "@/hooks/useColors";
 import { useHealth } from "@/contexts/HealthContext";
 import {
@@ -58,6 +59,7 @@ export default function UploadScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const r = useResponsive();
   const { addDocument } = useHealth();
 
   const [text, setText] = useState("");
@@ -70,6 +72,8 @@ export default function UploadScreen() {
 
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const webBottomPad = Platform.OS === "web" ? 110 : 100;
+  const maxWidth = r.isDesktop ? 1180 : 780;
+  const isSplit = r.isDesktop;
 
   const reset = () => {
     setPicked(null);
@@ -251,203 +255,257 @@ export default function UploadScreen() {
   const showTextArea = source === "whatsapp" || source === "audio" || (!picked && source !== "camera");
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 + webTopInset }]}>
-        <Text style={[styles.title, { color: colors.foreground }]}>Add to memory</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          Snap a report — real AI reads labs, meds, diagnoses
-        </Text>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: webBottomPad }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+        contentContainerStyle={{
+        paddingBottom: webBottomPad,
+          paddingHorizontal: r.isDesktop ? 24 : 16,
+          paddingTop: insets.top + 12 + webTopInset,
+          alignItems: "center",
+        }}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       >
-        <SectionHeader title="Source" />
-        <View style={styles.sourceGrid}>
-          {SOURCES.map((s) => {
-            const active = source === s.key;
-            return (
-              <Pressable
-                key={s.key}
-                onPress={() => {
-                  setSource(s.key);
-                  reset();
-                }}
-                style={[
-                  styles.sourceCard,
-                  {
-                    backgroundColor: active ? colors.primaryPale : colors.card,
-                    borderColor: active ? colors.primary : colors.border,
-                  },
-                ]}
-              >
-                <Feather
-                  name={s.icon}
-                  size={20}
-                  color={active ? colors.primary : colors.mutedForeground}
+        <View style={[styles.heroPanel, { width: "100%", maxWidth }] }>
+          <View style={styles.heroCopy}>
+            <Text style={[styles.title, { color: colors.foreground }]}>Add to memory</Text>
+            <Text style={[styles.subtitle, { color: colors.mutedForeground }]}> 
+              Scan a report, paste text, or forward a note. The app extracts labs, meds, and diagnoses into your timeline.
+            </Text>
+          </View>
+          <View style={styles.heroPills}>
+            <HeroPill label="Photo scan" />
+            <HeroPill label="PDF / text" />
+            <HeroPill label="Saves to timeline" />
+          </View>
+        </View>
+
+        <View style={{ width: "100%", maxWidth, marginTop: 16 }}>
+          <View style={[isSplit ? styles.splitGrid : styles.stackGrid]}>
+            <View style={isSplit ? styles.leftPane : undefined}>
+              <SectionHeader title="Source" />
+              <View style={styles.sourceGrid}>
+                {SOURCES.map((s) => {
+                  const active = source === s.key;
+                  return (
+                    <Pressable
+                      key={s.key}
+                      onPress={() => {
+                        setSource(s.key);
+                        reset();
+                      }}
+                      style={[
+                        styles.sourceCard,
+                        {
+                          backgroundColor: active ? colors.primaryPale : colors.card,
+                          borderColor: active ? colors.primary : colors.border,
+                        },
+                      ]}
+                    >
+                      <Feather name={s.icon} size={18} color={active ? colors.primary : colors.mutedForeground} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.sourceLabel, { color: colors.foreground }]}>{s.label}</Text>
+                        <Text style={[styles.sourceSub, { color: colors.mutedForeground }]} numberOfLines={1}>
+                          {s.sub}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {showImagePicker ? (
+                <View style={{ marginTop: 14 }}>
+                  {picked ? (
+                    <View style={[styles.preview, { borderColor: colors.border, backgroundColor: colors.card }]}> 
+                      <Image source={{ uri: picked.uri }} style={styles.previewImg} resizeMode="cover" />
+                      <Pressable
+                        onPress={() => setPicked(null)}
+                        style={[styles.removeBtn, { backgroundColor: colors.background }]}
+                      >
+                        <Feather name="x" size={16} color={colors.foreground} />
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <View style={styles.pickRow}>
+                      <Pressable
+                        onPress={captureWithCamera}
+                        style={[styles.pickBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                      >
+                        <Feather name="camera" size={18} color={colors.primary} />
+                        <Text style={[styles.pickLabel, { color: colors.foreground }]}>Open camera</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={pickFromLibrary}
+                        style={[styles.pickBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+                      >
+                        <Feather name="image" size={18} color={colors.primary} />
+                        <Text style={[styles.pickLabel, { color: colors.foreground }]}>From gallery</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
+              ) : null}
+
+              {(showTextArea && !picked) ? (
+                <>
+                  <SectionHeader title="Title" />
+                  <TextInput
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder="e.g. Apollo lab report — March"
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[
+                      styles.input,
+                      { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
+                    ]}
+                  />
+
+                  <SectionHeader title="Report text" action="Use sample" onAction={() => setText(SAMPLE_REPORT)} />
+                  <TextInput
+                    value={text}
+                    onChangeText={setText}
+                    placeholder="Paste lab report, prescription, WhatsApp text, or voice transcript..."
+                    placeholderTextColor={colors.mutedForeground}
+                    multiline
+                    textAlignVertical="top"
+                    style={[
+                      styles.textarea,
+                      { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
+                    ]}
+                  />
+                </>
+              ) : null}
+
+              {picked ? (
+                <>
+                  <SectionHeader title="Title" />
+                  <TextInput
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder="e.g. Apollo lab report — March"
+                    placeholderTextColor={colors.mutedForeground}
+                    style={[
+                      styles.input,
+                      { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
+                    ]}
+                  />
+                </>
+              ) : null}
+
+              <View style={{ marginTop: 16 }}>
+                <PrimaryButton
+                  label={processing ? (uploadProgress ?? "Extracting...") : "Extract memory"}
+                  icon="zap"
+                  onPress={handleExtract}
+                  loading={processing}
                 />
-                <Text style={[styles.sourceLabel, { color: colors.foreground }]}>
-                  {s.label}
-                </Text>
-                <Text style={[styles.sourceSub, { color: colors.mutedForeground }]} numberOfLines={1}>
-                  {s.sub}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {showImagePicker ? (
-          <View style={{ marginTop: 14 }}>
-            {picked ? (
-              <View style={[styles.preview, { borderColor: colors.border, backgroundColor: colors.card }]}>
-                <Image source={{ uri: picked.uri }} style={styles.previewImg} resizeMode="cover" />
-                <Pressable
-                  onPress={() => setPicked(null)}
-                  style={[styles.removeBtn, { backgroundColor: colors.background }]}
-                >
-                  <Feather name="x" size={16} color={colors.foreground} />
-                </Pressable>
               </View>
-            ) : (
-              <View style={styles.pickRow}>
-                <Pressable
-                  onPress={captureWithCamera}
-                  style={[styles.pickBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
-                >
-                  <Feather name="camera" size={18} color={colors.primary} />
-                  <Text style={[styles.pickLabel, { color: colors.foreground }]}>Open camera</Text>
-                </Pressable>
-                <Pressable
-                  onPress={pickFromLibrary}
-                  style={[styles.pickBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
-                >
-                  <Feather name="image" size={18} color={colors.primary} />
-                  <Text style={[styles.pickLabel, { color: colors.foreground }]}>From gallery</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        ) : null}
 
-        {(showTextArea && !picked) ? (
-          <>
-            <SectionHeader title="Title" />
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder="e.g. Apollo lab report — March"
-              placeholderTextColor={colors.mutedForeground}
-              style={[
-                styles.input,
-                { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
-              ]}
-            />
-
-            <SectionHeader title="Report text" action="Use sample" onAction={() => setText(SAMPLE_REPORT)} />
-            <TextInput
-              value={text}
-              onChangeText={setText}
-              placeholder="Paste lab report, prescription, WhatsApp text, or voice transcript..."
-              placeholderTextColor={colors.mutedForeground}
-              multiline
-              textAlignVertical="top"
-              style={[
-                styles.textarea,
-                { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
-              ]}
-            />
-          </>
-        ) : null}
-
-        {picked ? (
-          <>
-            <SectionHeader title="Title" />
-            <TextInput
-              value={title}
-              onChangeText={setTitle}
-              placeholder="e.g. Apollo lab report — March"
-              placeholderTextColor={colors.mutedForeground}
-              style={[
-                styles.input,
-                { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground },
-              ]}
-            />
-          </>
-        ) : null}
-
-        <View style={{ marginTop: 16 }}>
-          <PrimaryButton
-            label={processing ? (uploadProgress ?? "Extracting...") : "Extract with AI"}
-            icon="zap"
-            onPress={handleExtract}
-            loading={processing}
-          />
-        </View>
-
-        {processing && uploadProgress ? (
-          <View style={styles.progressRow}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={[styles.progressText, { color: colors.mutedForeground }]}>
-              {uploadProgress}
-            </Text>
-          </View>
-        ) : null}
-
-        {result ? (
-          <View style={[styles.resultCard, { backgroundColor: colors.primaryPale, borderColor: colors.primarySoft }]}>
-            <View style={styles.resultHeader}>
-              <Feather name="check-circle" size={16} color={colors.primary} />
-              <Text style={[styles.resultTitle, { color: colors.primary }]}>
-                Extracted · {Math.round(result.confidence * 100)}% confidence
-              </Text>
-              <View style={[styles.langPill, { backgroundColor: colors.primary }]}>
-                <Text style={styles.langText}>{result.language}</Text>
-              </View>
+              {processing && uploadProgress ? (
+                <View style={styles.progressRow}>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={[styles.progressText, { color: colors.mutedForeground }]}> 
+                    {uploadProgress}
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
-            {result.summary ? (
-              <Text style={[styles.summary, { color: colors.foreground }]}>
-                {result.summary}
-              </Text>
-            ) : null}
-            <Text style={[styles.providerLine, { color: colors.mutedForeground }]}>
-              Read by {result.provider} · {result.model}
-            </Text>
+            <View style={isSplit ? styles.rightPane : undefined}>
+              <View style={[styles.guidanceCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                <Text style={[styles.guidanceTitle, { color: colors.foreground }]}>How it works</Text>
+                <StepRow index="1" title="Capture clearly" body="Use a straight photo or paste text from a report. Cropped edges still work." />
+                <StepRow index="2" title="Extract automatically" body="The app turns labs, meds, and diagnoses into structured memory records." />
+                <StepRow index="3" title="Save to timeline" body="Your capture lands in Home, Timeline, and Doctor brief right away." />
+              </View>
 
-            <ResultBlock label="Lab values" count={result.labs.length}>
-              {result.labs.map((l) => (
-                <Text key={l.id} style={[styles.resultLine, { color: colors.foreground }]}>
-                  {l.name}: <Text style={{ fontFamily: "Inter_700Bold" }}>{l.value} {l.unit}</Text>
-                  <Text style={{ color: colors.mutedForeground }}>  ({String(l.status).toLowerCase()})</Text>
-                </Text>
-              ))}
-            </ResultBlock>
+              {result ? (
+                <View style={[styles.resultCard, { backgroundColor: colors.primaryPale, borderColor: colors.primarySoft }]}> 
+                  <View style={styles.resultHeader}>
+                    <Feather name="check-circle" size={16} color={colors.primary} />
+                    <Text style={[styles.resultTitle, { color: colors.primary }]}> 
+                      Extracted · {Math.round(result.confidence * 100)}% confidence
+                    </Text>
+                    <View style={[styles.langPill, { backgroundColor: colors.primary }]}> 
+                      <Text style={styles.langText}>{result.language}</Text>
+                    </View>
+                  </View>
 
-            <ResultBlock label="Medications" count={result.medications.length}>
-              {result.medications.map((m) => (
-                <Text key={m.id} style={[styles.resultLine, { color: colors.foreground }]}>
-                  {m.name} {m.dose} · {m.frequency}
-                </Text>
-              ))}
-            </ResultBlock>
+                  {result.summary ? (
+                    <Text style={[styles.summary, { color: colors.foreground }]}> 
+                      {result.summary}
+                    </Text>
+                  ) : null}
+                  <Text style={[styles.providerLine, { color: colors.mutedForeground }]}> 
+                    Read by {result.provider} · {result.model}
+                  </Text>
 
-            <ResultBlock label="Diagnoses" count={result.diagnoses.length}>
-              {result.diagnoses.map((d, i) => (
-                <Text key={i} style={[styles.resultLine, { color: colors.foreground }]}>
-                  · {d}
-                </Text>
-              ))}
-            </ResultBlock>
+                  <ResultBlock label="Lab values" count={result.labs.length}>
+                    {result.labs.map((l) => (
+                      <Text key={l.id} style={[styles.resultLine, { color: colors.foreground }]}> 
+                        {l.name}: <Text style={{ fontFamily: "Inter_700Bold" }}>{l.value} {l.unit}</Text>
+                        <Text style={{ color: colors.mutedForeground }}>  ({String(l.status).toLowerCase()})</Text>
+                      </Text>
+                    ))}
+                  </ResultBlock>
 
-            <View style={{ marginTop: 14 }}>
-              <PrimaryButton label="Save to timeline" icon="save" onPress={handleSave} />
+                  <ResultBlock label="Medications" count={result.medications.length}>
+                    {result.medications.map((m) => (
+                      <Text key={m.id} style={[styles.resultLine, { color: colors.foreground }]}> 
+                        {m.name} {m.dose} · {m.frequency}
+                      </Text>
+                    ))}
+                  </ResultBlock>
+
+                  <ResultBlock label="Diagnoses" count={result.diagnoses.length}>
+                    {result.diagnoses.map((d, i) => (
+                      <Text key={i} style={[styles.resultLine, { color: colors.foreground }]}> 
+                        · {d}
+                      </Text>
+                    ))}
+                  </ResultBlock>
+
+                  <View style={{ marginTop: 14 }}>
+                    <PrimaryButton label="Save to timeline" icon="save" onPress={handleSave} />
+                  </View>
+                </View>
+              ) : (
+                <View style={[styles.placeholderCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                  <Feather name="cpu" size={18} color={colors.primary} />
+                  <Text style={[styles.placeholderTitle, { color: colors.foreground }]}>Ready to extract</Text>
+                  <Text style={[styles.placeholderBody, { color: colors.mutedForeground }]}> 
+                    Pick a photo, paste a report, or use the sample text to test the AI flow.
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
-        ) : null}
-      </ScrollView>
+        </View>
+    </ScrollView>
+  );
+}
+
+function HeroPill({ label }: { label: string }) {
+  const colors = useColors();
+  return (
+    <View style={[styles.heroPill, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+      <Text style={[styles.heroPillText, { color: colors.foreground }]}>{label}</Text>
+    </View>
+  );
+}
+
+function StepRow({ index, title, body }: { index: string; title: string; body: string }) {
+  const colors = useColors();
+  return (
+    <View style={styles.stepRow}>
+      <View style={[styles.stepBadge, { backgroundColor: colors.primaryPale }]}> 
+        <Text style={[styles.stepBadgeText, { color: colors.primary }]}>{index}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.stepTitle, { color: colors.foreground }]}>{title}</Text>
+        <Text style={[styles.stepBody, { color: colors.mutedForeground }]}>{body}</Text>
+      </View>
     </View>
   );
 }
@@ -479,17 +537,38 @@ function ResultBlock({
 }
 
 const styles = StyleSheet.create({
-  header: { paddingHorizontal: 20, paddingBottom: 12 },
+  heroPanel: {
+    borderRadius: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 14,
+  },
+  heroCopy: { gap: 4 },
   title: { fontFamily: "DMSerifDisplay_400Regular", fontSize: 28, letterSpacing: -0.5 },
-  subtitle: { fontFamily: "Inter_400Regular", fontSize: 13, marginTop: 2 },
+  subtitle: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
+  heroPills: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  heroPill: {
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  heroPillText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  splitGrid: { flexDirection: "row", gap: 16, alignItems: "flex-start" },
+  stackGrid: { flexDirection: "column", gap: 16 },
+  leftPane: { flex: 1, minWidth: 0 },
+  rightPane: { flex: 0.95, minWidth: 0, gap: 12 },
   sourceGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   sourceCard: {
-    flexBasis: "48%",
+    flexBasis: "100%",
     flexGrow: 1,
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    gap: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   sourceLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginTop: 4 },
   sourceSub: { fontFamily: "Inter_400Regular", fontSize: 11 },
@@ -547,12 +626,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   progressText: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  guidanceCard: {
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 10,
+  },
+  guidanceTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  stepRow: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
+  stepBadge: { width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center" },
+  stepBadgeText: { fontFamily: "Inter_700Bold", fontSize: 11 },
+  stepTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginBottom: 2 },
+  stepBody: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
   resultCard: {
     marginTop: 18,
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
   },
+  placeholderCard: {
+    padding: 18,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 8,
+    alignItems: "flex-start",
+  },
+  placeholderTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  placeholderBody: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
   resultHeader: {
     flexDirection: "row",
     alignItems: "center",
