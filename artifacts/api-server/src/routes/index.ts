@@ -7,6 +7,7 @@ import extractRouter from "./extract";
 import documentsRouter from "./documents";
 import storageRouter from "./storage";
 import doctorRouter from "./doctor";
+import paymentsRouter from "./payments";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(extractRouter);
 router.use(documentsRouter);
 router.use(storageRouter);
 router.use(doctorRouter);
+router.use("/payments", paymentsRouter);
 
 export default router;
