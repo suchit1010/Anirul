@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, FileText, Loader2, Search, Users } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useState } from "react";
 
 import { doctorApi, type PatientSummary } from "@/lib/api";
@@ -8,10 +8,26 @@ import { formatPhone, formatRelative } from "@/lib/format";
 
 export function PatientsPage() {
   const [q, setQ] = useState("");
+  const [shareToken, setShareToken] = useState("");
+  const [shareBusy, setShareBusy] = useState(false);
   const { data, isLoading, error } = useQuery({
     queryKey: ["patients"],
     queryFn: () => doctorApi.listPatients(),
   });
+  const [, setLocation] = useLocation();
+
+  const openSharedPatient = async () => {
+    if (!shareToken.trim()) return;
+    setShareBusy(true);
+    try {
+      const result = await doctorApi.verifyShareToken(shareToken.trim());
+      setLocation(`/patients/${result.patientId}`);
+    } catch (err) {
+      window.alert((err as Error).message || "Could not open shared record");
+    } finally {
+      setShareBusy(false);
+    }
+  };
 
   const patients = (data?.patients ?? []).filter((p) => {
     if (!q.trim()) return true;
@@ -32,6 +48,32 @@ export function PatientsPage() {
         <p className="text-sm text-muted-foreground mt-1">
           Tap a patient to see their full health memory — labs, meds, diagnoses, and timeline.
         </p>
+      </div>
+
+      <div className="rounded-xl border bg-card p-4 space-y-3">
+        <div>
+          <div className="text-sm font-medium">Open by share token</div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Paste the token the patient sent you to open their shared record directly.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            value={shareToken}
+            onChange={(e) => setShareToken(e.target.value)}
+            placeholder="Paste share token"
+            className="flex-1 px-3 py-2 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <button
+            type="button"
+            onClick={openSharedPatient}
+            disabled={shareBusy || !shareToken.trim()}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
+          >
+            {shareBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            Open record
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">

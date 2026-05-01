@@ -2,10 +2,61 @@
 // Payment endpoints - Copy this file directly
 
 import { Router, Request, Response, IRouter } from 'express';
+import { db, paymentsTable } from '@workspace/db';
+import { desc, eq } from 'drizzle-orm';
 import { dodoClient } from '../lib/dodoPayments';
 import { logger } from '../lib/logger';
 
 const router: IRouter = Router();
+
+function toPaymentAmount(amount: unknown): string {
+  const value = typeof amount === 'number' ? amount : Number(amount);
+  if (Number.isNaN(value)) return '0.00';
+  return (value / 100).toFixed(2);
+}
+
+async function upsertPaymentFromWebhook(params: {
+  transactionId: string;
+  amount: unknown;
+  currency?: string;
+  status: string;
+  metadata?: Record<string, unknown>;
+  notes?: string;
+}) {
+  const doctorId = typeof params.metadata?.doctorId === 'string' ? params.metadata.doctorId : null;
+  const patientId = typeof params.metadata?.patientId === 'string' ? params.metadata.patientId : null;
+
+  if (!doctorId || !patientId) {
+    throw new Error('Webhook metadata missing doctorId or patientId');
+  }
+
+  await db
+    .insert(paymentsTable)
+    .values({
+      transactionId: params.transactionId,
+      doctorId,
+      patientId,
+      amount: toPaymentAmount(params.amount),
+      currency: params.currency || 'USDC',
+      status: params.status,
+      metadata: params.metadata || {},
+      notes: params.notes ?? null,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: paymentsTable.transactionId,
+      set: {
+        doctorId,
+        patientId,
+        amount: toPaymentAmount(params.amount),
+        currency: params.currency || 'USDC',
+        status: params.status,
+        metadata: params.metadata || {},
+        notes: params.notes ?? null,
+        updatedAt: new Date(),
+      },
+    });
+}
 
 /**
  * POST /api/payments/checkout
@@ -84,26 +135,42 @@ router.post('/webhook', async (req: Request, res: Response) => {
         'Payment completed'
       );
 
-      // TODO: Implement these actions:
-      // 1. Save payment to database
-      // 2. Create consultation session
-      // 3. Send notification to doctor
-      // 4. Send notification to patient
-      // 5. Unlock doctor console for patient's records
+      await upsertPaymentFromWebhook({
+        transactionId,
+        amount,
+        currency: req.body?.currency,
+        status: 'completed',
+        metadata,
+        notes: 'Payment completed via DODO webhook',
+      });
 
       res.json({ success: true });
       return;
     } else if (event === 'payment.failed') {
       logger.warn({ transactionId }, 'Payment failed');
 
-      // TODO: Notify patient of failure
+      await upsertPaymentFromWebhook({
+        transactionId,
+        amount,
+        currency: req.body?.currency,
+        status: 'failed',
+        metadata,
+        notes: 'Payment failed via DODO webhook',
+      });
 
       res.json({ success: true });
       return;
     } else if (event === 'payment.refunded') {
       logger.info({ transactionId }, 'Payment refunded');
 
-      // TODO: Cancel consultation session
+      await upsertPaymentFromWebhook({
+        transactionId,
+        amount,
+        currency: req.body?.currency,
+        status: 'refunded',
+        metadata,
+        notes: 'Payment refunded via DODO webhook',
+      });
 
       res.json({ success: true });
       return;
@@ -157,6 +224,32 @@ router.get('/doctor/:doctorId', async (req: Request, res: Response) => {
   }
 
   try {
+    const persistedPayments = await db
+      .select()
+      .from(paymentsTable)
+      .where(eq(paymentsTable.doctorId, doctorId))
+      .orderBy(desc(paymentsTable.createdAt));
+
+    const completedPersisted = persistedPayments.filter((p) => p.status === 'completed');
+    if (completedPersisted.length > 0) {
+      const totalEarnings = completedPersisted.reduce((sum, payment) => sum + Number(payment.amount), 0);
+
+      res.json({
+        totalEarnings: totalEarnings.toFixed(2),
+        transactionCount: completedPersisted.length,
+        currency: 'USDC',
+        network: 'Solana',
+        transactions: completedPersisted.map((p) => ({
+          id: p.id,
+          amount: Number(p.amount).toFixed(2),
+          date: p.createdAt,
+          status: p.status,
+          metadata: p.metadata,
+        })),
+      });
+      return;
+    }
+
     const payments = await dodoClient.getDoctorPayments(doctorId);
 
     const completedPayments = payments.filter((p: any) => p.status === 'completed');

@@ -1,13 +1,15 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Platform,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -16,12 +18,19 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { useColors } from "@/hooks/useColors";
 import { getLanguageInfo } from "@/constants/languages";
 import { useHealth } from "@/contexts/HealthContext";
+import { sharesApi, type ShareRecord } from "@/lib/api";
 
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { state, resetData } = useHealth();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shares, setShares] = useState<ShareRecord[]>([]);
+  const [note, setNote] = useState("");
+  const [expiresDays, setExpiresDays] = useState("30");
+  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
 
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const webBottomPad = Platform.OS === "web" ? 110 : 100;
@@ -47,6 +56,68 @@ export default function ProfileScreen() {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const activeShares = useMemo(() => shares.filter((share) => !share.revokedAt), [shares]);
+
+  useEffect(() => {
+    if (!shareOpen) return;
+    let mounted = true;
+    setShareLoading(true);
+    sharesApi
+      .list()
+      .then((r) => {
+        if (mounted) setShares(r.shares ?? []);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        Alert.alert("Could not load shares", (err as Error).message);
+      })
+      .finally(() => {
+        if (mounted) setShareLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [shareOpen]);
+
+  const createShare = async () => {
+    setShareLoading(true);
+    try {
+      const response = await sharesApi.create({
+        note: note.trim() || undefined,
+        expiresInDays: Number(expiresDays) || 30,
+      });
+      setGeneratedToken(response.shareToken);
+      setShares((prev) => [response.share, ...prev]);
+      Alert.alert("Share token created", `Send this token to your doctor:\n\n${response.shareToken}`);
+    } catch (err) {
+      Alert.alert("Could not create share", (err as Error).message);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const revokeShare = async (share: ShareRecord) => {
+    Alert.alert("Revoke access?", "This will stop the doctor from using this share token.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Revoke",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await sharesApi.revoke(share.id);
+            setShares((prev) =>
+              prev.map((item) =>
+                item.id === share.id ? { ...item, revokedAt: new Date().toISOString() } : item,
+              ),
+            );
+          } catch (err) {
+            Alert.alert("Could not revoke", (err as Error).message);
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -194,8 +265,8 @@ export default function ProfileScreen() {
           >
             <SettingsRow icon="lock" label="Consent center" sub={`${state.family.length + 2} active grants`} />
           </Pressable>
-          <Pressable onPress={() => router.push("/doctor-brief")}>
-            <SettingsRow icon="share-2" label="Share with doctor" sub="Generate one-time link" />
+          <Pressable onPress={() => setShareOpen(true)}>
+            <SettingsRow icon="share-2" label="Share with doctor" sub="Generate one-time token" />
           </Pressable>
           <Pressable
             onPress={() =>
@@ -238,6 +309,80 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      <Modal visible={shareOpen} animationType="slide" onRequestClose={() => setShareOpen(false)}>
+        <View style={[styles.modalRoot, { backgroundColor: colors.background }]}> 
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}> 
+            <Text style={[styles.modalTitle, { color: colors.foreground }]}>Share with doctor</Text>
+            <Pressable onPress={() => setShareOpen(false)} style={styles.closeBtn}>
+              <Feather name="x" size={20} color={colors.foreground} />
+            </Pressable>
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 36 }}>
+            <View style={[styles.panel, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+              <Text style={[styles.panelTitle, { color: colors.foreground }]}>Create access token</Text>
+              <Text style={[styles.panelText, { color: colors.mutedForeground }]}>Generate a one-time token that your doctor can paste into their console.</Text>
+
+              <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Note</Text>
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                placeholder="Dr Sharma, 2-week follow-up"
+                placeholderTextColor={colors.mutedForeground}
+                style={[styles.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
+              />
+
+              <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Expires in days</Text>
+              <TextInput
+                value={expiresDays}
+                onChangeText={setExpiresDays}
+                keyboardType="number-pad"
+                placeholder="30"
+                placeholderTextColor={colors.mutedForeground}
+                style={[styles.input, { borderColor: colors.border, color: colors.foreground, backgroundColor: colors.background }]}
+              />
+
+              <Pressable
+                onPress={createShare}
+                disabled={shareLoading}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  { backgroundColor: colors.primary, opacity: shareLoading ? 0.7 : pressed ? 0.9 : 1 },
+                ]}
+              >
+                <Text style={styles.primaryBtnText}>{shareLoading ? "Working..." : "Generate token"}</Text>
+              </Pressable>
+            </View>
+
+            {generatedToken ? (
+              <View style={[styles.panel, { backgroundColor: colors.primaryPale, borderColor: colors.primary }]}> 
+                <Text style={[styles.panelTitle, { color: colors.primary }]}>Latest token</Text>
+                <Text selectable style={[styles.tokenText, { color: colors.primary }]}>{generatedToken}</Text>
+              </View>
+            ) : null}
+
+            <SectionHeader title="Active shares" />
+            {shareLoading && shares.length === 0 ? (
+              <Text style={[styles.panelText, { color: colors.mutedForeground }]}>Loading...</Text>
+            ) : activeShares.length === 0 ? (
+              <Text style={[styles.panelText, { color: colors.mutedForeground }]}>No active shares yet.</Text>
+            ) : (
+              activeShares.map((share) => (
+                <View key={share.id} style={[styles.shareRow, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.rowTitle, { color: colors.foreground }]}>{share.note || "Doctor access"}</Text>
+                    <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Expires {share.expiresAt ? new Date(share.expiresAt).toLocaleDateString() : "soon"}</Text>
+                  </View>
+                  <Pressable onPress={() => revokeShare(share)} style={styles.revokeBtn}>
+                    <Text style={[styles.revokeText, { color: colors.destructive }]}>Revoke</Text>
+                  </Pressable>
+                </View>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -349,6 +494,54 @@ const styles = StyleSheet.create({
   famInit: { fontFamily: "Inter_700Bold", fontSize: 14 },
   rowTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   rowSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
+  modalRoot: { flex: 1 },
+  modalHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  modalTitle: { fontFamily: "DMSerifDisplay_400Regular", fontSize: 24 },
+  closeBtn: { padding: 8 },
+  panel: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+  },
+  panelTitle: { fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  panelText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginTop: 6 },
+  fieldLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12, marginTop: 14, marginBottom: 8 },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+  },
+  primaryBtn: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  primaryBtnText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  tokenText: { fontFamily: "Inter_700Bold", fontSize: 18, marginTop: 10, letterSpacing: 1.2 },
+  shareRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 10,
+  },
+  revokeBtn: { paddingHorizontal: 10, paddingVertical: 8 },
+  revokeText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   riskCard: {
     padding: 14,
     borderRadius: 12,

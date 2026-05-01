@@ -115,7 +115,27 @@ export interface PatientDetail {
   diagnoses: string[];
 }
 
+export interface ShareAccessResponse {
+  accessGranted: true;
+  patientId: string;
+  patient: {
+    id: string;
+    name: string | null;
+    phone: string;
+  };
+  share: {
+    id: string;
+    note: string | null;
+    expiresAt: string | null;
+  };
+}
+
 export const doctorApi = {
   listPatients: () => request<{ patients: PatientSummary[] }>("/doctor/patients"),
   getPatient: (id: string) => request<PatientDetail>(`/doctor/patients/${id}`),
+  verifyShareToken: (token: string) =>
+    request<ShareAccessResponse>("/doctor/verify-access", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
 };
