@@ -206,26 +206,12 @@ export default function UploadScreen() {
       active: m.active ?? true,
     }));
 
-    const localId = `doc-${Date.now().toString(36)}`;
-    const doc: HealthDocument = {
-      id: localId,
-      title: finalTitle,
-      source,
-      status: "completed",
-      uploadedAt: new Date().toISOString(),
-      rawText: picked ? `[Image] ${picked.fileName}` : text,
-      extractedLabs: labs,
-      extractedMeds: meds,
-      extractedDiagnoses: result.diagnoses,
-      language: (result.language as HealthDocument["language"]) || "english",
-      confidence: result.confidence,
-    };
+    let docId = `doc-${Date.now().toString(36)}`;
+    let uploadedAt = new Date().toISOString();
 
-    await addDocument(doc);
-
-    // Persist to server (best-effort)
+    // Persist to server first, then mirror locally.
     try {
-      await documentsApi.create({
+      const created = await documentsApi.create({
         title: finalTitle,
         source,
         objectPath: result.savedObjectPath ?? null,
@@ -238,9 +224,31 @@ export default function UploadScreen() {
         confidence: result.confidence,
         provider: result.provider,
       });
+      if (created.document?.id) {
+        docId = created.document.id;
+      }
+      if (created.document?.uploadedAt) {
+        uploadedAt = created.document.uploadedAt;
+      }
     } catch (err) {
       console.warn("server doc save failed", err);
     }
+
+    const doc: HealthDocument = {
+      id: docId,
+      title: finalTitle,
+      source,
+      status: "completed",
+      uploadedAt,
+      rawText: picked ? `[Image] ${picked.fileName}` : text,
+      extractedLabs: labs,
+      extractedMeds: meds,
+      extractedDiagnoses: result.diagnoses,
+      language: (result.language as HealthDocument["language"]) || "english",
+      confidence: result.confidence,
+    };
+
+    await addDocument(doc);
 
     setText("");
     setTitle("");

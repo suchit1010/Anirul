@@ -460,6 +460,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
+  note: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
+    marginTop: 4,
+  },
+
   messageBox: {
     flexDirection: "row",
     gap: 10,

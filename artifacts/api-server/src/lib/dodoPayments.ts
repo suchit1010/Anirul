@@ -1,7 +1,6 @@
 // artifacts/api-server/src/lib/dodoPayments.ts
 // DODO Payments Integration - Copy this file directly
 
-import fetch from 'node-fetch';
 import crypto from 'crypto';
 import { logger } from './logger';
 

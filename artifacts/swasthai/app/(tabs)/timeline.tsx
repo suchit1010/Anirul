@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -29,7 +30,7 @@ interface TimelineItem {
 export default function TimelineScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { state } = useHealth();
+  const { state, loading } = useHealth();
   const [filter, setFilter] = useState<FilterKey>("all");
 
   const items = useMemo<TimelineItem[]>(() => {
@@ -99,6 +100,15 @@ export default function TimelineScreen() {
   const filtered = items.filter((i) => filter === "all" || i.kind === filter);
   const webTopInset = Platform.OS === "web" ? 67 : 0;
   const webBottomPad = Platform.OS === "web" ? 110 : 100;
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.subtitle, { color: colors.mutedForeground, marginTop: 10 }]}>Loading your timeline...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

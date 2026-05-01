@@ -23,11 +23,13 @@ router.post('/checkout', async (req: Request, res: Response) => {
   const { doctorId, patientId, consultationPrice = 50, currency = 'USDC' } = req.body;
 
   if (!doctorId || !patientId) {
-    return res.status(400).json({ error: 'doctorId and patientId are required' });
+    res.status(400).json({ error: 'doctorId and patientId are required' });
+    return;
   }
 
   if (consultationPrice <= 0) {
-    return res.status(400).json({ error: 'consultationPrice must be greater than 0' });
+    res.status(400).json({ error: 'consultationPrice must be greater than 0' });
+    return;
   }
 
   try {
@@ -43,12 +45,14 @@ router.post('/checkout', async (req: Request, res: Response) => {
       sessionId: session.sessionId,
       expiresAt: session.expiresAt,
     });
+    return;
   } catch (err) {
     logger.error(err, 'Failed to create checkout session');
     res.status(500).json({
       error: 'Failed to create checkout session',
       details: err instanceof Error ? err.message : 'Unknown error',
     });
+    return;
   }
 });
 
@@ -65,7 +69,8 @@ router.post('/webhook', async (req: Request, res: Response) => {
   // Verify webhook signature
   if (!dodoClient.verifyWebhookSignature(payload, signature)) {
     logger.warn('Webhook verification failed - invalid signature');
-    return res.status(401).json({ error: 'Unauthorized' });
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
   }
 
   const { event, transactionId, amount, metadata, status } = req.body;
@@ -87,25 +92,30 @@ router.post('/webhook', async (req: Request, res: Response) => {
       // 5. Unlock doctor console for patient's records
 
       res.json({ success: true });
+      return;
     } else if (event === 'payment.failed') {
       logger.warn({ transactionId }, 'Payment failed');
 
       // TODO: Notify patient of failure
 
       res.json({ success: true });
+      return;
     } else if (event === 'payment.refunded') {
       logger.info({ transactionId }, 'Payment refunded');
 
       // TODO: Cancel consultation session
 
       res.json({ success: true });
+      return;
     } else {
       logger.info({ event }, 'Unhandled webhook event');
       res.json({ success: true });
+      return;
     }
   } catch (err) {
     logger.error(err, 'Webhook processing error');
     res.status(500).json({ error: 'Webhook processing failed' });
+    return;
   }
 });
 
@@ -114,18 +124,22 @@ router.post('/webhook', async (req: Request, res: Response) => {
  * Check payment status
  */
 router.get('/status/:transactionId', async (req: Request, res: Response) => {
-  const { transactionId } = req.params;
+  const txParam = req.params['transactionId'];
+  const transactionId = Array.isArray(txParam) ? txParam[0] : txParam;
 
   if (!transactionId) {
-    return res.status(400).json({ error: 'transactionId required' });
+    res.status(400).json({ error: 'transactionId required' });
+    return;
   }
 
   try {
     const status = await dodoClient.getPaymentStatus(transactionId);
     res.json(status);
+    return;
   } catch (err) {
     logger.error(err, 'Failed to get payment status');
     res.status(500).json({ error: 'Failed to check payment status' });
+    return;
   }
 });
 
@@ -134,10 +148,12 @@ router.get('/status/:transactionId', async (req: Request, res: Response) => {
  * Get doctor's consultation earnings
  */
 router.get('/doctor/:doctorId', async (req: Request, res: Response) => {
-  const { doctorId } = req.params;
+  const doctorParam = req.params['doctorId'];
+  const doctorId = Array.isArray(doctorParam) ? doctorParam[0] : doctorParam;
 
   if (!doctorId) {
-    return res.status(400).json({ error: 'doctorId required' });
+    res.status(400).json({ error: 'doctorId required' });
+    return;
   }
 
   try {
@@ -159,9 +175,11 @@ router.get('/doctor/:doctorId', async (req: Request, res: Response) => {
         metadata: p.metadata,
       })),
     });
+    return;
   } catch (err) {
     logger.error(err, 'Failed to get doctor payments');
     res.status(500).json({ error: 'Failed to fetch doctor payments' });
+    return;
   }
 });
 
@@ -170,21 +188,25 @@ router.get('/doctor/:doctorId', async (req: Request, res: Response) => {
  * Refund a payment (admin only - add auth check)
  */
 router.post('/refund/:transactionId', async (req: Request, res: Response) => {
-  const { transactionId } = req.params;
+  const txParam = req.params['transactionId'];
+  const transactionId = Array.isArray(txParam) ? txParam[0] : txParam;
   const { reason } = req.body;
 
   // TODO: Add admin authorization check
 
   if (!transactionId || !reason) {
-    return res.status(400).json({ error: 'transactionId and reason required' });
+    res.status(400).json({ error: 'transactionId and reason required' });
+    return;
   }
 
   try {
     const result = await dodoClient.refundPayment(transactionId, reason);
     res.json(result);
+    return;
   } catch (err) {
     logger.error(err, 'Failed to refund payment');
     res.status(500).json({ error: 'Refund failed' });
+    return;
   }
 });
 

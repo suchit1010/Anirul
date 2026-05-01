@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { LabValueCard } from "@/components/LabValueCard";
 import { useColors } from "@/hooks/useColors";
 import { useHealth } from "@/contexts/HealthContext";
+import { documentsApi } from "@/lib/api";
 
 export default function DocumentScreen() {
   const colors = useColors();
@@ -33,6 +34,11 @@ export default function DocumentScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            try {
+              await documentsApi.delete(doc.id);
+            } catch {
+              // Keep local delete behavior even if server delete fails.
+            }
             await deleteDocument(doc.id);
             router.back();
           },

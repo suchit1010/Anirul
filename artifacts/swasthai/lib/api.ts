@@ -263,6 +263,22 @@ export interface SavedDocument {
   uploadedAt: string;
 }
 
+export interface ShareRecord {
+  id: string;
+  patientId: string;
+  token: string;
+  note: string | null;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
+export interface ShareCreateResponse {
+  share: ShareRecord;
+  shareToken: string;
+  expiresAt: string;
+}
+
 export const documentsApi = {
   list: () => request<{ documents: SavedDocument[] }>("/documents"),
   create: (doc: Partial<SavedDocument> & { title: string }) =>
@@ -271,4 +287,17 @@ export const documentsApi = {
       body: JSON.stringify(doc),
     }),
   delete: (id: string) => request<{ ok: true }>(`/documents/${id}`, { method: "DELETE" }),
+};
+
+export const sharesApi = {
+  list: () => request<{ shares: ShareRecord[] }>("/shares"),
+  create: (params: { expiresInDays?: number; note?: string }) =>
+    request<ShareCreateResponse>("/shares/create", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+  revoke: (id: string) =>
+    request<{ share: ShareRecord }>(`/shares/${id}/revoke`, {
+      method: "POST",
+    }),
 };

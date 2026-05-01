@@ -8,6 +8,7 @@ import documentsRouter from "./documents";
 import storageRouter from "./storage";
 import doctorRouter from "./doctor";
 import paymentsRouter from "./payments";
+import sharesRouter from "./shares";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(documentsRouter);
 router.use(storageRouter);
 router.use(doctorRouter);
 router.use("/payments", paymentsRouter);
+router.use(sharesRouter);
 
 export default router;
